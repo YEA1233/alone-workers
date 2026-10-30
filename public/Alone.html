@@ -2805,7 +2805,7 @@ function connectToGameServer() {
                     ) {
                         buildings =
                             world.buildings;
-                        if (_activeChestBuilding && !buildings.some(building => building.id === _activeChestBuilding.id)) closeChest();
+                        syncActiveChest();
                     }
 
                     mapTerrainDirty =
@@ -2876,6 +2876,7 @@ function connectToGameServer() {
                                     );
 
                                 renderInventory();
+                                renderChestUI();
                             }
 
                             if (
@@ -6460,6 +6461,21 @@ function connectToGameServer() {
             const overlay = document.getElementById('chest-menu-overlay');
             overlay.style.display = 'none';
             _activeChestBuilding = null;
+        }
+
+        function syncActiveChest() {
+            if (!_activeChestBuilding) return;
+            const updated = buildings.find(building =>
+                building.type === 'chest' &&
+                (building.id === _activeChestBuilding.id ||
+                    (building.x === _activeChestBuilding.x && building.y === _activeChestBuilding.y))
+            );
+            if (!updated) {
+                closeChest();
+                return;
+            }
+            _activeChestBuilding = updated;
+            renderChestUI();
         }
 
         function renderChestUI() {
