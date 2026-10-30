@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://alone-game.crazyfunnyboy265.workers.dev/sitemap.xml
