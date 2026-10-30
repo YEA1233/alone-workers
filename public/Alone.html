@@ -354,6 +354,86 @@
             gap: 15px;
         }
 
+        #news-screen {
+            justify-content: flex-start;
+            gap: 14px;
+            padding: 24px 16px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        #news-screen h2 {
+            margin: 4px 0 0;
+            color: var(--gold);
+            letter-spacing: 5px;
+        }
+
+        .news-archive {
+            width: min(820px, 96vw);
+            text-align: left;
+        }
+
+        .news-section-label {
+            margin: 8px 0;
+            color: #888;
+            font-size: 0.65rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+        }
+
+        .news-article {
+            margin: 0 0 12px;
+            padding: 16px 18px;
+            border: 1px solid #333;
+            border-left: 3px solid #555;
+            border-radius: 5px;
+            background: linear-gradient(110deg, #121212, #090909);
+            color: #ccc;
+            text-align: left;
+        }
+
+        .news-article.latest {
+            border-left-color: var(--gold);
+        }
+
+        .news-article header {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 7px;
+            color: #888;
+            font-size: 0.62rem;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .news-article time {
+            color: var(--gold);
+            white-space: nowrap;
+        }
+
+        .news-article h3 {
+            margin: 0 0 8px;
+            color: #eee;
+            font-size: 1rem;
+        }
+
+        .news-article p,
+        .news-article ul {
+            margin: 0;
+            font-size: 0.76rem;
+            line-height: 1.65;
+        }
+
+        .news-article ul {
+            padding-left: 20px;
+        }
+
+        .news-article li + li {
+            margin-top: 4px;
+        }
+
         .setting-item {
             display: flex;
             justify-content: space-between;
@@ -983,7 +1063,7 @@
                 <button class="menu-btn" onclick="document.getElementById('save-file-input').click()">OPEN .SAVE
                     FILE</button>
                 <button class="menu-btn" onclick="showTutorial()">TUTORIAL</button>
-                <button class="menu-btn" onclick="showPatchNotes()">PATCH NOTES</button>
+                <button class="menu-btn" onclick="showNews()">NEWS & UPDATES</button>
             </div>
             <div id="menu-quote"
                 style="margin-top: 30px; font-style: italic; color: #888; font-size: 0.9rem; max-width: 450px; line-height: 1.4;">
@@ -1000,20 +1080,75 @@
             </div>
         </div>
 
-        <div id="patch-notes-screen" class="screen" style="display:none;">
-            <div class="settings-wrap" style="max-width:700px;">
-                <h2>PATCH NOTES</h2>
-                <div style="text-align:left; color:#ddd; font-size:0.74rem; line-height:1.7;">
-                    <p><b>• The public server:</b> one official server is always in the room list. Its world only moves while someone is in it.</p>
-        <p><b>• Your character is yours:</b> you come back to the same character, inventory and position every visit (per browser).</p>
-        <p><b>• Hammer:</b> new tool. Click a building with it to walk up and break it; half the materials come back. Chests must be empty.</p>
-        <p><b>• Ruins:</b> new Ruins slider in world settings. Ruin chests hold much more, and sometimes a tool.</p>
-        <p><b>• Balance:</b> big rocks drop 5 stone, shovels are cheap (2 twigs, 4 wood, 4 stone, no science machine), wolves are fewer, weaker, slower than you and leave at dawn.</p>
-        <p><b>• Controls:</b> click something to walk to it. Hold SPACE to gather, hold F to fight. No axe? Shake a tree (3 times a day).</p>
-        <p>???</p>
-                </div>
+        <div id="news-screen" class="screen" style="display:none;">
+            <h2>NEWS & UPDATES</h2>
+            <div class="news-archive">
+                <p class="news-section-label">LATEST</p>
+                <article class="news-article latest">
+                    <header><span>Multiplayer · Building</span><time datetime="2026-10-30">October 30, 2026</time></header>
+                    <h3>Shared chests and no more structure lock-in</h3>
+                    <ul>
+                        <li>Open multiplayer chests now refresh as the server updates them. Your inventory and the chest stay in sync while you move items, including changes made by other players.</li>
+                        <li>Structure ownership has been removed. Any player with a hammer can dismantle structures, including walls that could otherwise trap someone. Chests must still be emptied first, and dismantling still returns some materials.</li>
+                    </ul>
+                </article>
+                <article class="news-article latest">
+                    <header><span>Camera · World rendering</span><time datetime="2026-10-28">October 28, 2026</time></header>
+                    <h3>First-person mode gets a wider, steadier view</h3>
+                    <ul>
+                        <li>Mouse look and camera-relative movement work in solo and multiplayer. Multiplayer now predicts movement locally and smoothly corrects toward the server position to reduce camera jitter.</li>
+                        <li>The view uses a wider 90° horizontal field of view. The camera follows the elevation of the tile beneath you, and nearby players and world sprites are grounded to their terrain.</li>
+                        <li>Night and caves use a separate darkness overlay with light sources, while water sits below land with filled shore edges to hide gaps.</li>
+                    </ul>
+                </article>
+
+                <p class="news-section-label">UPDATE ARCHIVE</p>
+                <article class="news-article">
+                    <header><span>Worlds · Multiplayer</span><span>Feature update</span></header>
+                    <h3>More ways to start and keep a world</h3>
+                    <ul>
+                        <li>Solo and hosted worlds have interchangeable save slots. Host a saved world, create a public or private server, or join from the server browser.</li>
+                        <li>The same browser character can return with its position and inventory. Maps persist between sessions, are shared across the server, and show other players.</li>
+                        <li>The official public world stays listed and pauses when empty. Admin tools include player-targeted creative access, OHKO, and first-person controls.</li>
+                    </ul>
+                </article>
+                <article class="news-article">
+                    <header><span>Caves · Exploration</span><span>Feature update</span></header>
+                    <h3>A world beneath the surface</h3>
+                    <ul>
+                        <li>World generation can disable caves. When enabled, large cave entrances lead to connected underground exits, marked on the map.</li>
+                        <li>Caves are dark except near skylights and the brightly lit Greg arena. They contain more rock and iron; surface mountain biomes have fewer rocks and no iron.</li>
+                        <li>Generation now reports its progress, and cave layouts include winding passages and connected chambers.</li>
+                    </ul>
+                </article>
+                <article class="news-article">
+                    <header><span>Crafting · Light</span><span>Feature update</span></header>
+                    <h3>Lanterns and amber</h3>
+                    <ul>
+                        <li>Lanterns shine brighter than torches and last eight minutes. Amber can refuel a lantern.</li>
+                        <li>Use the extractor with at least five wood selected: each attempt consumes five wood and can produce one, two, or three amber.</li>
+                    </ul>
+                </article>
+                <article class="news-article">
+                    <header><span>Bosses · Wildlife</span><span>Feature update</span></header>
+                    <h3>Greg from Accounting arrives underground</h3>
+                    <ul>
+                        <li>Greg is a 2,000-HP elephant boss who charges. Evade the charge and attack while he is stunned; the fight is built for a group but can be attempted solo.</li>
+                        <li>Greg stays in a 20×20-tile arena with surrounding illumination. Leaving during a fight makes him disengage and heal until someone returns.</li>
+                        <li>Defeating Greg turns elephants hostile at close range and spawns a reward chest. Food now restores health, and an iron-requiring sword deals stronger attacks with better durability.</li>
+                    </ul>
+                </article>
+                <article class="news-article">
+                    <header><span>Building · Survival</span><span>Feature update</span></header>
+                    <h3>Tools, ruins, and survival tuning</h3>
+                    <ul>
+                        <li>The hammer lets you walk up to and dismantle a structure; empty chests first. Ruin frequency is adjustable, and ruin chests can contain larger supplies and worn tools.</li>
+                        <li>Big rocks yield more stone, shovels are easier to craft, and wolves are less overwhelming and leave at dawn. Trees can also be shaken for occasional drops.</li>
+                        <li>Click-to-walk helps approach targets; hold Space to gather and F to attack.</li>
+                    </ul>
+                </article>
             </div>
-            <button class="menu-btn primary" onclick="hidePatchNotes()">BACK</button>
+            <button class="menu-btn primary" onclick="hideNews()">BACK</button>
         </div>
 
         <div id="init-choice" class="screen" style="display:none;">
@@ -3123,7 +3258,7 @@ function connectToGameServer() {
         }
 
         function isAnyOverlayActive() {
-            const overlayIds = ['main-menu', 'init-choice', 'world-slots-screen', 'world-settings-screen', 'room-browser-screen', 'tutorial-screen', 'patch-notes-screen', 'build-menu-overlay', 'world-map-overlay', 'pause-screen', 'admin-console'];
+            const overlayIds = ['main-menu', 'init-choice', 'world-slots-screen', 'world-settings-screen', 'room-browser-screen', 'tutorial-screen', 'news-screen', 'build-menu-overlay', 'world-map-overlay', 'pause-screen', 'admin-console'];
             const chestOpen = document.getElementById('chest-menu-overlay')?.style.display === 'flex';
             return chestOpen || overlayIds.some(id => {
                 const el = document.getElementById(id);
@@ -3990,8 +4125,8 @@ function connectToGameServer() {
         }
         function showTutorial() { document.getElementById('main-menu').style.display = 'none'; document.getElementById('tutorial-screen').style.display = 'flex'; }
         function hideTutorial() { document.getElementById('tutorial-screen').style.display = 'none'; document.getElementById('main-menu').style.display = 'flex'; }
-        function showPatchNotes() { document.getElementById('main-menu').style.display = 'none'; document.getElementById('patch-notes-screen').style.display = 'flex'; }
-        function hidePatchNotes() { document.getElementById('patch-notes-screen').style.display = 'none'; document.getElementById('main-menu').style.display = 'flex'; }
+        function showNews() { document.getElementById('main-menu').style.display = 'none'; document.getElementById('news-screen').style.display = 'flex'; }
+        function hideNews() { document.getElementById('news-screen').style.display = 'none'; document.getElementById('main-menu').style.display = 'flex'; }
         function confirmSettings() {
             try {
 
