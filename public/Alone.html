@@ -362,10 +362,53 @@
             overflow-y: auto;
         }
 
+        .screen-close {
+            position: fixed;
+            z-index: 3100;
+            top: max(12px, env(safe-area-inset-top));
+            right: max(12px, env(safe-area-inset-right));
+            width: 42px;
+            height: 42px;
+            border: 1px solid #ff4444;
+            border-radius: 50%;
+            background: #210909;
+            color: #ff6666;
+            font-size: 1.8rem;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .screen-close:hover,
+        .screen-close:focus-visible {
+            background: #ff4444;
+            color: #fff;
+        }
+
         #news-screen h2 {
             margin: 4px 0 0;
             color: var(--gold);
             letter-spacing: 5px;
+        }
+
+        .news-filters {
+            display: flex;
+            width: min(820px, 96vw);
+            gap: 8px;
+        }
+
+        .news-filters input,
+        .news-filters select {
+            min-width: 0;
+            padding: 10px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background: #101010;
+            color: #eee;
+            font: inherit;
+        }
+
+        .news-filters input {
+            flex: 1;
         }
 
         .news-archive {
@@ -392,8 +435,33 @@
             text-align: left;
         }
 
-        .news-article.latest {
+        .news-article[data-update-type="major"] {
             border-left-color: var(--gold);
+        }
+
+        .news-category {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .news-type {
+            padding: 3px 6px;
+            border: 1px solid #555;
+            border-radius: 3px;
+            color: #bbb;
+            font-size: 0.55rem;
+            letter-spacing: 1px;
+        }
+
+        .news-article[data-update-type="major"] .news-type {
+            border-color: #8a7023;
+            color: var(--gold);
+        }
+
+        #news-no-results {
+            color: #aaa;
+            text-align: center;
         }
 
         .news-article header {
@@ -1081,19 +1149,29 @@
         </div>
 
         <div id="news-screen" class="screen" style="display:none;">
+            <button class="screen-close" type="button" aria-label="Close news and return to main menu" onclick="hideNews()">×</button>
             <h2>NEWS & UPDATES</h2>
+            <div class="news-filters">
+                <input id="news-search" type="search" placeholder="Search updates..." aria-label="Search updates" oninput="filterNews()">
+                <select id="news-type-filter" aria-label="Filter updates by type" onchange="filterNews()">
+                    <option value="all">All updates</option>
+                    <option value="major">Major</option>
+                    <option value="minor">Minor</option>
+                </select>
+            </div>
             <div class="news-archive">
+                <div class="news-group">
                 <p class="news-section-label">LATEST</p>
-                <article class="news-article latest">
-                    <header><span>Multiplayer · Building</span><time datetime="2026-10-30">October 30, 2026</time></header>
+                <article class="news-article" data-update-type="minor">
+                    <header><span class="news-category">Multiplayer · Building <span class="news-type">MINOR</span></span><time datetime="2026-10-30">October 30, 2026</time></header>
                     <h3>Shared chests and no more structure lock-in</h3>
                     <ul>
                         <li>Open multiplayer chests now refresh as the server updates them. Your inventory and the chest stay in sync while you move items, including changes made by other players.</li>
                         <li>Structure ownership has been removed. Any player with a hammer can dismantle structures, including walls that could otherwise trap someone. Chests must still be emptied first, and dismantling still returns some materials.</li>
                     </ul>
                 </article>
-                <article class="news-article latest">
-                    <header><span>Camera · World rendering</span><time datetime="2026-10-28">October 28, 2026</time></header>
+                <article class="news-article" data-update-type="major">
+                    <header><span class="news-category">Camera · World rendering <span class="news-type">MAJOR</span></span><time datetime="2026-10-28">October 28, 2026</time></header>
                     <h3>First-person mode gets a wider, steadier view</h3>
                     <ul>
                         <li>Mouse look and camera-relative movement work in solo and multiplayer. Multiplayer now predicts movement locally and smoothly corrects toward the server position to reduce camera jitter.</li>
@@ -1102,9 +1180,11 @@
                     </ul>
                 </article>
 
+                </div>
+                <div class="news-group">
                 <p class="news-section-label">UPDATE ARCHIVE</p>
-                <article class="news-article">
-                    <header><span>Worlds · Multiplayer</span><time datetime="2026-10-26">October 26, 2026</time></header>
+                <article class="news-article" data-update-type="major">
+                    <header><span class="news-category">Worlds · Multiplayer <span class="news-type">MAJOR</span></span><time datetime="2026-10-26">October 26, 2026</time></header>
                     <h3>More ways to start and keep a world</h3>
                     <ul>
                         <li>Solo and hosted worlds have interchangeable save slots. Host a saved world, create a public or private server, or join from the server browser.</li>
@@ -1112,8 +1192,8 @@
                         <li>The official public world stays listed and pauses when empty. Admin tools include player-targeted creative access, OHKO, and first-person controls.</li>
                     </ul>
                 </article>
-                <article class="news-article">
-                    <header><span>Caves · Exploration</span><time datetime="2026-10-26">October 26, 2026</time></header>
+                <article class="news-article" data-update-type="major">
+                    <header><span class="news-category">Caves · Exploration <span class="news-type">MAJOR</span></span><time datetime="2026-10-26">October 26, 2026</time></header>
                     <h3>A world beneath the surface</h3>
                     <ul>
                         <li>World generation can disable caves. When enabled, large cave entrances lead to connected underground exits, marked on the map.</li>
@@ -1121,25 +1201,25 @@
                         <li>Generation now reports its progress, and cave layouts include winding passages and connected chambers.</li>
                     </ul>
                 </article>
-                <article class="news-article">
-                    <header><span>Crafting · Light</span><time datetime="2026-10-26">October 26, 2026</time></header>
+                <article class="news-article" data-update-type="minor">
+                    <header><span class="news-category">Crafting · Light <span class="news-type">MINOR</span></span><time datetime="2026-10-26">October 26, 2026</time></header>
                     <h3>Lanterns and amber</h3>
                     <ul>
                         <li>Lanterns shine brighter than torches and last eight minutes. Amber can refuel a lantern.</li>
                         <li>Use the extractor with at least five wood selected: each attempt consumes five wood and can produce one, two, or three amber.</li>
                     </ul>
                 </article>
-                <article class="news-article">
-                    <header><span>Bosses · Wildlife</span><time datetime="2026-10-26">October 26, 2026</time></header>
+                <article class="news-article" data-update-type="major">
+                    <header><span class="news-category">Bosses · Wildlife <span class="news-type">MAJOR</span></span><time datetime="2026-10-26">October 26, 2026</time></header>
                     <h3>Greg from Accounting arrives underground</h3>
                     <ul>
                         <li>Greg is a 2,000-HP elephant boss who charges. Evade the charge and attack while he is stunned; the fight is built for a group but can be attempted solo.</li>
                         <li>Greg stays in a 20×20-tile arena with surrounding illumination. Leaving during a fight makes him disengage and heal until someone returns.</li>
-                        <li>Defeating Greg turns elephants hostile at close range and spawns a reward chest. Food now restores health, and an iron-requiring sword deals stronger attacks with better durability.</li>
+                        <li>Defeating Greg turns elephants hostile at close range and spawns a reward chest with supplies, healing food, amber, and durable equipment.</li>
                     </ul>
                 </article>
-                <article class="news-article">
-                    <header><span>Building · Survival</span><time datetime="2026-10-26">October 26, 2026</time></header>
+                <article class="news-article" data-update-type="minor">
+                    <header><span class="news-category">Building · Survival <span class="news-type">MINOR</span></span><time datetime="2026-10-26">October 26, 2026</time></header>
                     <h3>Tools, ruins, and survival tuning</h3>
                     <ul>
                         <li>The hammer lets you walk up to and dismantle a structure; empty chests first. Ruin frequency is adjustable, and ruin chests can contain larger supplies and worn tools.</li>
@@ -1147,7 +1227,9 @@
                         <li>Click-to-walk helps approach targets; hold Space to gather and F to attack.</li>
                     </ul>
                 </article>
+                </div>
             </div>
+            <p id="news-no-results" role="status" style="display:none;">No updates match your search.</p>
             <button class="menu-btn primary" onclick="hideNews()">BACK</button>
         </div>
 
@@ -1342,6 +1424,7 @@
         </div>
 
         <div id="tutorial-screen" class="screen" style="display:none;">
+            <button class="screen-close" type="button" aria-label="Close tutorial and return to main menu" onclick="hideTutorial()">×</button>
             <div
                 style="max-width: 500px; text-align: center; border: 1px solid #333; padding: 30px; background: #050505;">
                 <h2 style="color:var(--hunger)">ESSENTIALS</h2>
@@ -1900,7 +1983,7 @@
         let creativePanelEnabled = false, ohkoEnabled = false;
         let localRegenConfirmations = null;
         let worldConfig = { resMult: 1, foodMult: 1, dayMult: 1, nightMult: 1, hungerMult: 1, oceanMult: 1, forestMult: 1, mountainMult: 1, wildlifeMult: 1, ruinsMult: 1, worldSize: 1, mapPreset: 'standard', creative: false, cavesEnabled: true, firstPerson3D: false };
-        let dayCount = 1, wolfWaveSpawned = false, gregDefeated = false;
+        let dayCount = 1, wolfWaveSpawned = false, gregDefeated = false, gregDefeatedDay = null;
         let blueprintCategory = 'ALL';
         let autosaveTimer = null;
         let mapDiscoverySaveTimer = null;
@@ -3429,7 +3512,7 @@ function connectToGameServer() {
             selectedHotbarIndex = 0;
             buildings = []; resourceNodes = []; unlocked = { door: false }; mobs = [];
             frameCount = 0; currentPhase = 'DAY'; phaseTimeLeft = CYCLE.DAY.length; darknessExposure = 0; hungerAlertLevel = 0;
-            dayCount = 1; wolfWaveSpawned = false; gregDefeated = false;
+            dayCount = 1; wolfWaveSpawned = false; gregDefeated = false; gregDefeatedDay = null;
             discoveredGrid.fill(0); mapTerrainDirty = true; isMapOpen = false;
             document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
             document.getElementById('main-menu').style.display = 'flex';
@@ -3469,14 +3552,14 @@ function connectToGameServer() {
             const compactNodes = resourceNodes.map(packSaveNode);
             const savedPlayer = { ...player, inventory: player.inventory.map(slot => ({ ...slot })) };
             return {
-                version: 8, genVersion: currentGenVersion, seed: worldSeed,
+                version: 9, genVersion: currentGenVersion, seed: worldSeed,
                 seedString: currentWorldSeed,
                 slotId: activeSaveSlotId,
                 slotName: activeSaveSlotName,
                 gameType: 'solo',
                 config: { ...worldConfig, firstPerson3D: thirdPerson3D },
                 firstPerson3D: thirdPerson3D,
-                dayCount, currentPhase, phaseTimeLeft, darknessExposure, gregDefeated,
+                dayCount, currentPhase, phaseTimeLeft, darknessExposure, gregDefeated, gregDefeatedDay,
                 selectedHotbarIndex,
                 unlocked, player: savedPlayer, buildings, resourceNodes: compactNodes, mobs,
                 discoveredGrid: encodeBytes(discoveredGrid),
@@ -3619,7 +3702,7 @@ function connectToGameServer() {
         }
 
         function applySave(save) {
-            if (!save || ![1, 2, 3, 4, 5, 6, 7, 8].includes(save.version) || !save.discoveredGrid) throw new Error('Unsupported or damaged save file.');
+            if (!save || ![1, 2, 3, 4, 5, 6, 7, 8, 9].includes(save.version) || !save.discoveredGrid) throw new Error('Unsupported or damaged save file.');
             activeSaveSlotId = save.slotId || 'current';
             activeSaveSlotName = save.slotName || 'Legacy world';
             pendingMode = 'solo';
@@ -3655,6 +3738,9 @@ function connectToGameServer() {
             phaseTimeLeft = Number(save.phaseTimeLeft) || CYCLE[currentPhase].length;
             darknessExposure = save.darknessExposure || 0;
             gregDefeated = !!save.gregDefeated;
+            gregDefeatedDay = gregDefeated
+                ? (Number.isInteger(save.gregDefeatedDay) && save.gregDefeatedDay > 0 ? save.gregDefeatedDay : dayCount)
+                : null;
             unlocked = save.unlocked || { door: false };
             player = { ...save.player, inventory: save.player.inventory.map(slot => ({ ...slot })) };
             buildings = (save.buildings || []).map(building => building.type === 'cave_entrance'
@@ -4125,8 +4211,27 @@ function connectToGameServer() {
         }
         function showTutorial() { document.getElementById('main-menu').style.display = 'none'; document.getElementById('tutorial-screen').style.display = 'flex'; }
         function hideTutorial() { document.getElementById('tutorial-screen').style.display = 'none'; document.getElementById('main-menu').style.display = 'flex'; }
-        function showNews() { document.getElementById('main-menu').style.display = 'none'; document.getElementById('news-screen').style.display = 'flex'; }
+        function showNews() {
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('news-screen').style.display = 'flex';
+            filterNews();
+        }
         function hideNews() { document.getElementById('news-screen').style.display = 'none'; document.getElementById('main-menu').style.display = 'flex'; }
+        function filterNews() {
+            const query = document.getElementById('news-search').value.trim().toLocaleLowerCase();
+            const type = document.getElementById('news-type-filter').value;
+            let visibleCount = 0;
+            document.querySelectorAll('#news-screen .news-article').forEach(article => {
+                const matches = (type === 'all' || article.dataset.updateType === type) &&
+                    article.textContent.toLocaleLowerCase().includes(query);
+                article.hidden = !matches;
+                if (matches) visibleCount++;
+            });
+            document.querySelectorAll('#news-screen .news-group').forEach(group => {
+                group.hidden = !Array.from(group.querySelectorAll('.news-article')).some(article => !article.hidden);
+            });
+            document.getElementById('news-no-results').style.display = visibleCount ? 'none' : 'block';
+        }
         function confirmSettings() {
             try {
 
@@ -5023,6 +5128,20 @@ function connectToGameServer() {
                 chargeState: 'idle',
                 chargeTimer: 0
             });
+        }
+
+        function maybeRespawnSoloGreg() {
+            if (!gregDefeated || worldConfig.cavesEnabled === false || !caveLayerLocal) return;
+            if (dayCount - gregDefeatedDay < 10) return;
+
+            gregDefeated = false;
+            ensureSoloGregSpawn(caveLayerLocal);
+            if (!caveLayerLocal.mobs.some(mob => mob.type === 'greg')) {
+                gregDefeated = true;
+                return;
+            }
+            gregDefeatedDay = null;
+            displayChat({ name: 'SYSTEM', text: 'Ten days have passed. Greg has returned to the cave arena.', color: '#ffcc00' });
         }
 
         function ensureSoloCaveExitLinks(surfaceBuildings, caveLayer) {
@@ -6889,7 +7008,7 @@ function connectToGameServer() {
             if (!isOnlineActive() && phaseTimeLeft <= 0) {
                 if (currentPhase === 'DAY') currentPhase = 'DUSK';
                 else if (currentPhase === 'DUSK') currentPhase = 'NIGHT';
-                else { currentPhase = 'DAY'; dayCount++; wolfWaveSpawned = false; mobs = mobs.filter(m => m.type !== 'wolf'); resourceNodes.forEach(node => { if (node.type === 'sapling' && dayCount >= node.plantedDay) { node.type = 'wood'; node.icon = '🌲'; node.hp = 5; node.maxHp = 5; } }); }
+                else { currentPhase = 'DAY'; dayCount++; wolfWaveSpawned = false; mobs = mobs.filter(m => m.type !== 'wolf'); resourceNodes.forEach(node => { if (node.type === 'sapling' && dayCount >= node.plantedDay) { node.type = 'wood'; node.icon = '🌲'; node.hp = 5; node.maxHp = 5; } }); maybeRespawnSoloGreg(); }
                 phaseTimeLeft = CYCLE[currentPhase].length * (currentPhase === 'DAY' ? worldConfig.dayMult : worldConfig.nightMult);
             }
 
@@ -7871,6 +7990,8 @@ function connectToGameServer() {
                 player.boatId = null;
                 unlocked = { door: false };
                 dayCount = 1;
+                gregDefeated = false;
+                gregDefeatedDay = null;
                 currentPhase = 'DAY';
                 phaseTimeLeft = CYCLE.DAY.length;
                 wolfWaveSpawned = false;
@@ -7977,6 +8098,7 @@ function connectToGameServer() {
                 return;
             }
             dayCount++;
+            maybeRespawnSoloGreg();
             wolfWaveSpawned = false;
             resourceNodes.forEach(node => {
                 if (node.type === 'sapling' && dayCount >= node.plantedDay) { node.type = 'wood'; node.icon = '🌲'; node.hp = 5; node.maxHp = 5; }
@@ -8727,6 +8849,7 @@ function connectToGameServer() {
             if (m.hp <= 0) {
                 if (m.type === 'greg') {
                     gregDefeated = true;
+                    gregDefeatedDay = dayCount;
                     spawnGregRewardChest(m);
                     displayChat({ name: 'SYSTEM', text: 'Greg (from Accounting) is defeated. Every elephant is now hostile!', color: '#ff4444' });
                 }
@@ -8742,7 +8865,12 @@ function connectToGameServer() {
                 { type: 'stone', count: 100 },
                 { type: 'flint', count: 100 },
                 { type: 'twigs', count: 100 },
-                { type: 'carrots', count: 50 }
+                { type: 'carrots', count: 50 },
+                { type: 'iron', count: 25 },
+                { type: 'amber', count: 3 },
+                { type: 'paste', count: 20 },
+                { type: 'sword', count: 1, duration: BUILDINGS.sword.durability, maxDuration: BUILDINGS.sword.durability },
+                { type: 'lantern', count: 1, duration: BUILDINGS.lantern.duration, maxDuration: BUILDINGS.lantern.duration }
             ];
             const directions = [[2, 0], [-2, 0], [0, 2], [0, -2], [2, 2], [-2, -2]];
             const spot = directions
