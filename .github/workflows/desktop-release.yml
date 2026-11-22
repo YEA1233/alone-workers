@@ -4,12 +4,19 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing version tag to build, for example v1.0.1
+        required: true
+        type: string
 
 permissions:
   contents: write
 
 jobs:
-  build:
+  linux:
+    name: Build and publish Linux packages
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,7 +27,25 @@ jobs:
       - run: npm ci
       - run: node -e "if (process.env.RELEASE_TAG !== 'v' + require('./package.json').version) throw new Error('Tag must match package.json version')"
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
-      - run: npm run desktop:publish -- --win --linux
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
+      - run: npm run desktop:publish -- --linux
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  windows:
+    name: Build and publish Windows packages
+    needs: linux
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node -e "if (process.env.RELEASE_TAG !== 'v' + require('./package.json').version) throw new Error('Tag must match package.json version')"
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
+      - run: npm run desktop:publish -- --win
         env:
           GH_TOKEN: ${{ github.token }}
