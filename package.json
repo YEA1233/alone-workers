@@ -1,4 +1,84 @@
 {
   "name": "alone-workers",
-  "private": true
+  "version": "1.0.1",
+  "gameVersion": "1.0.1.0",
+  "description": "ALONE desktop release",
+  "private": true,
+  "main": "electron-main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YEA1233/alone-workers.git"
+  },
+  "scripts": {
+    "start": "electron .",
+    "desktop:build": "electron-builder --publish never --config.electronDist=node_modules/electron/dist",
+    "desktop:publish": "electron-builder --publish always",
+    "package": "electron-builder",
+    "package:dir": "electron-builder --dir"
+  },
+  "devDependencies": {
+    "electron": "^45.4.1",
+    "electron-builder": "^26.18.0"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.11"
+  },
+  "build": {
+    "appId": "com.alone.game",
+    "productName": "ALONE",
+    "buildVersion": "1.0.1.0",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "YEA1233",
+        "repo": "alone-workers",
+        "releaseType": "release"
+      }
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "electron-main.js",
+      "electron-preload.js",
+      "launcher.html",
+      "launcher.js",
+      "package.json",
+      "public/**/*",
+      "!public/.wrangler/**/*",
+      "!public/*.bak-*"
+    ],
+    "extraResources": [
+      {
+        "from": "legacy",
+        "to": "legacy"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ALONE",
+      "menuCategory": "ALONE",
+      "include": "installer.nsh"
+    },
+    "linux": {
+      "target": [
+        "deb",
+        "rpm"
+      ],
+      "maintainer": "ALONE Game Maintainers",
+      "icon": "public/preview.png",
+      "category": "Game"
+    }
+  }
 }

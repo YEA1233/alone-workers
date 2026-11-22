@@ -1,0 +1,2187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ALONE - Survival</title>
+<style>
+:root {
+--bg-color: #050505;
+--ui-bg: rgba(10, 10, 10, 0.98);
+--accent: #ff4444;
+--hunger: #ffa500;
+--text: #eeeeee;
+--gold: #ffcc00;
+--success: #2ecc71;
+--border: #333;
+--wood: #a67c52;
+--stone: #888888;
+--iron: #d3d3d3;
+--day: #87ceeb;
+--night: #111133;
+}
+body, html {
+margin: 0; padding: 0;
+width: 100%; height: 100%;
+overflow: hidden;
+background-color: var(--bg-color);
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+touch-action: none;
+color: var(--text);
+}
+#game-container {
+position: relative;
+width: 100vw; height: 100vh;
+background: #000;
+display: flex; justify-content: center; align-items: center;
+}
+canvas { display: block; background-color: #000; cursor: default; }
+.overlay { position: absolute; color: var(--text); user-select: none; }
+.screen {
+position: absolute;
+top: 0; left: 0; width: 100%; height: 100%;
+background: rgba(0,0,0,0.95);
+display: flex; flex-direction: column;
+justify-content: center; align-items: center;
+z-index: 3000;
+text-align: center;
+color: var(--text);
+}
+h1 { font-size: 5rem; color: var(--accent); margin: 0; text-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
+letter-spacing: 15px; font-weight: 900; }
+h2 { color: white; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
+
+.menu-btn {
+background: #111; border: 1px solid #444;
+color: white; padding: 12px 30px; margin: 10px;
+font-size: 1rem; cursor: pointer; border-radius: 4px;
+transition: all 0.2s; min-width: 220px;
+text-transform: uppercase; letter-spacing: 1px;
+}
+.menu-btn:hover { border-color: var(--hunger); color: var(--hunger); background: #1a1a00; }
+.menu-btn.primary { background: #221a00; border-color: var(--hunger); color: var(--hunger); }
+
+/* HUD & Stats */
+#hud { top: 88px; left: 20px; display: flex; flex-direction: column; gap: 5px; pointer-events: none; z-index: 100; }
+.stat-box {
+background: var(--ui-bg); padding: 8px 15px;
+border: 1px solid #222; font-weight: bold; font-size: 0.8rem;
+display: flex; justify-content: space-between; min-width: 180px;
+color: white;
+}
+.stat-box.warning { border-color: var(--hunger); color: var(--hunger); animation: warning-pulse 1.4s ease-in-out infinite; }
+.stat-box.critical { border-color: var(--accent); color: var(--accent); animation: warning-pulse 0.65s ease-in-out infinite; }
+@keyframes warning-pulse { 50% { background: rgba(90, 20, 0, 0.9); } }
+.hp-border { border-left: 5px solid var(--accent); }
+.hunger-border { border-left: 5px solid var(--hunger); }
+
+/* Hotbar */
+#inventory-container {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.85); padding: 10px;
+    border-radius: 12px; border: 1px solid #333; z-index: 500;
+}
+#inventory-bar { display: flex; gap: 6px; }
+.inv-slot {
+    width: 50px; height: 50px; background: #111; border: 1px solid #444;
+    display: flex; justify-content: center; align-items: center;
+    position: relative; border-radius: 6px; color: white; font-size: 1.4rem;
+    cursor: pointer;
+}
+.inv-slot:hover { border-color: #666; }
+.inv-slot.selected { border: 2px solid var(--gold); background: #1a1a00; transform: translateY(-4px); }
+.inv-slot .slot-number { position: absolute; top: 2px; left: 5px; font-size: 0.55rem; color: #888; }
+.inv-slot .count {
+    position: absolute; bottom: 2px; right: 5px; font-size: 0.7rem;
+    font-weight: 900; color: #fff; text-shadow: 1px 1px 2px black;
+}
+.inv-slot .dur-bar {
+    position: absolute; bottom: 0; left: 0; height: 3px; background: var(--success); width: 0%;
+}
+
+/* World Settings */
+.settings-wrap {
+    background: #111; padding: 20px; border: 1px solid #333; border-radius: 8px;
+    width: 90%; max-width: 500px; max-height: 62vh; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;
+}
+.setting-item { display: flex; justify-content: space-between; align-items: center; color: #ccc; font-size: 0.8rem; }
+.setting-item input[type="range"] { width: 150px; accent-color: var(--hunger); }
+.creative-toggle { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--gold); font-size: 0.8rem; font-weight: bold; border-top: 1px solid #333; padding-top: 12px; }
+.creative-toggle input { accent-color: var(--gold); }
+.creative-toggle small { width: 100%; color: #888; font-size: 0.6rem; font-weight: normal; margin-left: 22px; }
+
+/* World Clock */
+#clock-container {
+position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+background: var(--ui-bg); border: 1px solid #333; padding: 10px 30px;
+text-align: center; z-index: 100; border-radius: 0 0 15px 15px;
+}
+#day-count { font-size: 0.7rem; font-weight: 900; color: var(--gold); }
+#phase-label { font-size: 0.5rem; text-transform: uppercase; color: #888; letter-spacing: 2px; }
+#phase-timer { font-size: 1.2rem; font-weight: 900; color: white; }
+
+/* Warnings */
+#darkness-warning { display: none; }
+#darkness-warning { display: none; }
+
+/* UI Overlays */
+#top-controls { top: 20px; right: 20px; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; z-index: 100; }
+#minimap-container { width: 210px; height: 140px; background: #000; border: 1px solid #333; }
+#utility-bar { position: absolute; top: 20px; left: 20px; display: flex; gap: 10px; z-index: 500; }
+#utility-bar { position: absolute; top: 20px; left: 20px; display: flex; gap: 10px; z-index: 500; }
+.util-item {
+background: #111; border: 1px solid #333; color: white; padding: 12px;
+cursor: pointer; display: flex; flex-direction: column; align-items: center;
+width: 140px; border-radius: 8px; transition: all 0.2s;
+}
+#placement-controls { position: absolute; top: 20px; left: 190px; z-index: 700; display: none; align-items: center; gap: 8px; background: rgba(0,0,0,0.85); padding: 8px; border: 1px solid var(--gold); }
+#placement-label { color: var(--gold); font-size: 0.7rem; font-weight: bold; }
+#placement-cancel, .map-control { min-width: 0; width: 34px; height: 30px; padding: 0; margin: 0; }
+
+#build-menu-overlay { padding: 24px; box-sizing: border-box; }
+#build-menu-overlay h2 { margin: 0 0 4px; }
+#blueprint-subtitle { margin: 0 0 14px; color: #888; font-size: 0.7rem; }
+#blueprint-tabs { display: flex; flex-wrap: wrap; gap: 6px; width: min(760px, 94vw); margin-bottom: 10px; }
+.blueprint-tab { flex: 1 1 100px; border: 1px solid #333; background: #111; color: #aaa; padding: 8px 10px; cursor: pointer; font-size: 0.65rem; text-transform: uppercase; }
+.blueprint-tab.active { border-color: var(--gold); color: var(--gold); background: #1a1605; }
+.blueprint-tab:hover { border-color: #777; color: white; }
+#blueprint-summary { width: min(760px, 94vw); color: #777; font-size: 0.65rem; text-align: left; margin-bottom: 6px; }
+#blueprint-feedback { width: min(760px, 94vw); min-height: 1.1em; color: var(--hunger); font-size: 0.65rem; text-align: left; margin-bottom: 6px; }
+.build-grid { width: min(760px, 94vw); max-height: min(55vh, 520px); overflow-y: auto; padding: 0 4px 4px 0; display: flex; flex-direction: column; gap: 5px; }
+.build-card { display: grid; grid-template-columns: 42px minmax(110px, 1fr) minmax(130px, 0.8fr) auto; align-items: center; gap: 10px; min-height: 58px; padding: 8px 10px; background: #111; border: 1px solid #333; border-radius: 4px; cursor: pointer; text-align: left; transition: border-color 0.2s, background 0.2s; }
+.build-card:hover { border-color: var(--hunger); background: #1a180d; }
+.build-card.locked { opacity: 0.45; cursor: not-allowed; filter: grayscale(0.7); }
+.build-card .recipe-icon { grid-row: span 2; font-size: 1.7rem; text-align: center; }
+.build-card .recipe-name { font-weight: 900; color: white; font-size: 0.8rem; }
+.build-card .recipe-type { color: #777; font-size: 0.58rem; text-transform: uppercase; }
+.build-card .recipe-cost { color: #bbb; font-size: 0.65rem; }
+.build-card .recipe-action { color: var(--success); font-size: 0.6rem; font-weight: bold; text-align: right; text-transform: uppercase; }
+.build-card.locked .recipe-action { color: var(--gold); }
+@media (max-width: 600px) { .build-card { grid-template-columns: 36px 1fr auto; } .build-card .recipe-cost { grid-column: 2; } .build-card .recipe-action { grid-column: 3; grid-row: 1 / span 2; } }
+#world-map-overlay { background: rgba(0, 0, 0, 0.96); gap: 12px; padding: 24px; box-sizing: border-box; }
+#world-map-overlay h2 { margin: 0; color: var(--gold); letter-spacing: 6px; }
+#world-map-canvas { width: min(88vw, 78vh); height: min(88vw, 78vh); image-rendering: pixelated; border: 1px solid #555; background: #000; cursor: grab; touch-action: none; }
+#world-map-canvas.dragging { cursor: grabbing; }
+#world-map-caption { color: #888; font-size: 0.7rem; }
+#world-map-controls { display: flex; gap: 6px; align-items: center; }
+#world-map-zoom-label { min-width: 50px; color: var(--gold); font-size: 0.7rem; }
+#chest-menu-overlay { background: rgba(0,0,0,0.96); gap: 16px; padding: 24px; box-sizing: border-box; }
+#chest-menu-overlay h2 { margin: 0; color: var(--gold); letter-spacing: 6px; }
+#chest-storage-ui { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; }
+.storage-panel { min-width: 260px; background: #101010; border: 1px solid #333; border-radius: 8px; padding: 12px; }
+.storage-panel-header { font-size: 0.7rem; color: var(--gold); letter-spacing: 2px; margin-bottom: 8px; text-transform: uppercase; }
+.storage-grid { display: grid; grid-template-columns: repeat(5, 52px); gap: 8px; justify-content: center; }
+.storage-slot { width: 52px; height: 52px; background: #111; border: 1px solid #444; border-radius: 6px; position: relative; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; cursor: pointer; }
+.storage-slot.empty { color: #555; }
+.storage-slot .count { position: absolute; right: 4px; bottom: 2px; font-size: 0.72rem; font-weight: 900; }
+.storage-slot.drag-over { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(255,204,0,0.5); }
+
+.chat-msg {
+    opacity: 1;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    animation: chatFade 5s ease forwards;
+}
+@keyframes chatFade {
+    0% { opacity: 1; transform: translateY(0); }
+    80% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-2px); }
+}
+
+.console-popup {
+position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+width: 450px; background: var(--ui-bg); border: 2px solid var(--gold);
+padding: 30px; display: none; flex-direction: column; z-index: 900; border-radius: 8px;
+color: white;
+}
+.option-row { display: flex; justify-content: space-between; align-items: center; background: #111; padding: 10px; margin-bottom: 10px; border-radius: 4px; }
+
+#mobile-controls { position: absolute; bottom: 40px; right: 40px; width: 120px; height: 120px; background: rgba(255,255,255,0.1); border-radius: 50%; display: none; justify-content: center; align-items: center; z-index: 1000; }
+#joystick { width: 50px; height: 50px; background: rgba(255,255,255,0.3); border-radius: 50%; }
+
+@media (max-width: 768px) { #mobile-controls { display: flex; } }
+
+</style>
+</head>
+<body>
+<div id="game-container">
+<canvas id="gameCanvas"></canvas>
+
+<div id="clock-container" class="overlay" style="display:none;">
+    <div id="day-count">DAY 1</div>
+    <div id="phase-label">DAYLIGHT</div>
+    <div id="phase-timer">04:00</div>
+</div>
+
+<div id="darkness-warning" aria-hidden="true"></div>
+
+<!-- SCREENS -->
+<div id="main-menu" class="screen">
+    <h1>ALONE</h1>
+    <div style="display: flex; flex-direction: column; gap: 5px;">
+        <button class="menu-btn primary" onclick="showInitialize()">PLAY</button>
+        <button id="load-save-btn" class="menu-btn" style="display:none; border-color:var(--success); color:var(--success);" onclick="loadGame()">RESUME SECTOR</button>
+        <button class="menu-btn" onclick="document.getElementById('save-file-input').click()">OPEN .SAVE FILE</button>
+        <button class="menu-btn" onclick="showTutorial()">TUTORIAL</button>
+    <button class="menu-btn" onclick="showPatchNotes()">PATCH NOTES</button>
+</div>
+<div id="menu-quote" style="margin-top: 30px; font-style: italic; color: #888; font-size: 0.9rem; max-width: 450px; line-height: 1.4;"></div>
+</div>
+
+<div id="patch-notes-screen" class="screen" style="display:none;">
+<div class="settings-wrap" style="max-width:700px;">
+    <h2>PATCH NOTES</h2>
+    <div style="text-align:left; color:#ddd; font-size:0.74rem; line-height:1.7;">
+        <p><b>• Server authority:</b> room state is validated server-side before placement and inventory changes.</p>
+        <p><b>• Structure placement:</b> walls and buildings now block overlapping placement, and repeated free placement is prevented.</p>
+        <p><b>• Storage:</b> chest buildings now hold inventory and are gated behind the science machine.</p>
+        <p><b>• Creative mode:</b> invulnerability and no hunger, with no science-gate restrictions.</p>
+        <p><b>• Resource rebalance:</b> rocks are now flint, big rocks drop stone + flint, trees drop wood + twigs + acorns, and acorns can be planted as young trees.</p>
+        <p><b>• Worldgen:</b> ocean/forest/mountain density smoothing and biome scaling are fixed and follow the configured values correctly.</p>
+        <p><b>• Multiplayer cleanup:</b> empty lobbies are removed when the last player leaves.</p>
+    </div>
+</div>
+<button class="menu-btn primary" onclick="hidePatchNotes()">BACK</button>
+</div>
+
+<div id="init-choice" class="screen" style="display:none;">
+    <h2>MODE SELECT</h2>
+    <button class="menu-btn primary" onclick="prepareSettings('solo')">SOLO EXPLORATION</button>
+    <button class="menu-btn" onclick="showOnlineProfile()">ONLINE EXPLORATION</button>
+    <button class="menu-btn" onclick="resetGame()">BACK</button>
+</div>
+
+<div id="world-settings-screen" class="screen" style="display:none;">
+    <h2>WORLD CUSTOMIZATION</h2>
+    <div class="settings-wrap">
+        <div class="setting-item">
+            <span>RESOURCE DENSITY</span>
+            <input type="range" id="set-res" min="0.2" max="3.0" step="0.2" value="1.0">
+        </div>
+        <div class="setting-item">
+            <span>FORAGING RATE</span>
+            <input type="range" id="set-food" min="0.2" max="3.0" step="0.2" value="1.0">
+        </div>
+        <div class="setting-item">
+            <span>DAY LENGTH</span>
+            <input type="range" id="set-day" min="0.5" max="4.0" step="0.5" value="1.0">
+        </div>
+        <div class="setting-item">
+            <span>NIGHT LENGTH</span>
+            <input type="range" id="set-night" min="0.5" max="4.0" step="0.5" value="1.0">
+        </div>
+        <div class="setting-item">
+            <span>HUNGER SPEED</span>
+            <input type="range" id="set-hunger" min="0.2" max="2.0" step="0.2" value="1.0">
+        </div>
+        <div class="setting-item">
+            <span>WORLD SIZE</span>
+            <input type="range" id="set-world-size" min="0.75" max="2.0" step="0.25" value="1.0">
+        </div>
+        <div class="setting-item">
+            <span>MAP PRESET</span>
+            <select id="set-map-preset" style="background:#000; color:white; border:1px solid #444; padding:6px;">
+                <option value="standard">STANDARD</option>
+                <option value="inland">INLAND WATERS</option>
+                <option value="dry">DRY WORLD</option>
+                <option value="riverlands">RIVERLANDS</option>
+                <option value="islands">ISLANDS</option>
+            </select>
+        </div>
+        <div class="setting-item">
+            <span>OCEAN COVERAGE</span>
+            <input type="range" id="set-ocean" min="0.5" max="1.4" step="0.1" value="1.0">
+        </div>
+        <div class="setting-item">
+            <span>FOREST DENSITY</span>
+            <input type="range" id="set-forest" min="0.2" max="2.5" step="0.1" value="1.0">
+        </div>
+        <div class="setting-item">
+            <span>MOUNTAIN DENSITY</span>
+            <input type="range" id="set-mountain" min="0.2" max="2.5" step="0.1" value="1.0">
+        </div>
+        <div class="setting-item">
+            <span>WILDLIFE</span>
+            <input type="range" id="set-wildlife" min="0" max="3" step="0.25" value="1.0">
+        </div>
+        <label class="creative-toggle"><input type="checkbox" id="set-creative"> CREATIVE MODE <small>FREE CRAFTING, BUILDING, AND INVULNERABILITY</small></label>
+        <div class="setting-item"><span>CHARACTER</span><select id="set-emoji" style="background:#000; color:white; border:1px solid #444; padding:6px; font-size:1.1rem;"><option>🤠</option><option>😃</option><option>🙃</option><option>🙂</option><option>😑</option><option>😐</option><option>🫤</option></select></div>
+        <div id="room-creation-settings" style="display:none; border-top:1px solid #333; padding-top:12px;">
+            <div class="setting-item"><span>ROOM VISIBILITY</span><select id="room-visibility" style="background:#000; color:white; border:1px solid #444; padding:6px;"><option value="public">PUBLIC</option><option value="private">PRIVATE</option></select></div>
+            <div class="setting-item"><span>ROOM SAVE</span><input id="room-save-file-input" type="file" accept=".save,application/json" style="max-width:200px; background:#000; color:white; border:1px solid #444; padding:6px;"></div>
+            <div id="creation-code-preview" style="color:var(--gold); font-size:0.65rem; text-align:center; margin-top:8px;"></div>
+            <div id="creation-status" style="color:#ff4444; font-size:0.65rem; text-align:center; margin-top:8px;"></div>
+        </div>
+    </div>
+    <button class="menu-btn primary" onclick="confirmSettings()">START SURVIVAL</button>
+    <button class="menu-btn" onclick="cancelSettings()">BACK</button>
+</div>
+
+<div id="online-profile-screen" class="screen" style="display:none;">
+    <h2>YOUR SURVIVOR</h2>
+    <div class="settings-wrap">
+        <div class="setting-item"><span>CALLSIGN</span><input id="online-name" type="text" maxlength="16" placeholder="SURVIVOR" style="width:150px; background:#000; color:white; border:1px solid #444; padding:6px;"></div>
+        <div class="setting-item"><span>CHARACTER</span><select id="online-emoji" style="background:#000; color:white; border:1px solid #444; padding:6px; font-size:1.1rem;"><option>🤠</option><option>😃</option><option>🙃</option><option>🙂</option><option>😑</option><option>😐</option><option>🫤</option></select></div>
+    </div>
+    <button class="menu-btn primary" onclick="continueToRooms()">CONTINUE</button>
+    <button class="menu-btn" onclick="resetGame()">BACK</button>
+</div>
+
+<div id="room-browser-screen" class="screen" style="display:none;">
+    <h2>ROOMS</h2>
+    <div class="settings-wrap">
+        <button class="menu-btn primary" onclick="startRoomCreation()">CREATE GAME</button>
+        <div style="border-top:1px solid #333; padding-top:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;"><b style="color:var(--gold); font-size:0.75rem;">PUBLIC GAMES</b><button class="blueprint-tab" onclick="refreshRooms()">REFRESH</button></div>
+            <div id="public-room-list" style="max-height:180px; overflow-y:auto; margin-top:8px; color:#888; font-size:0.7rem;">Loading rooms...</div>
+        </div>
+        <div style="border-top:1px solid #333; padding-top:12px;"><div class="setting-item"><span>PRIVATE CODE</span><input id="private-room-code" type="text" maxlength="6" placeholder="A1B2C3" style="width:100px; text-transform:uppercase; background:#000; color:white; border:1px solid #444; padding:6px;"><button class="menu-btn" style="min-width:auto; padding:8px 12px; margin:0;" onclick="joinPrivateRoom()">JOIN</button></div></div>
+        <div id="connection-status" style="color:#888; font-size:0.65rem; text-align:center;"></div>
+    </div>
+    <button class="menu-btn" onclick="resetGame()">BACK</button>
+</div>
+
+<div id="tutorial-screen" class="screen" style="display:none;">
+    <div style="max-width: 500px; text-align: center; border: 1px solid #333; padding: 30px; background: #050505;">
+        <h2 style="color:var(--hunger)">ESSENTIALS</h2>
+        <div style="text-align: left; color: white;">
+            <p>• <b>Move:</b> WASD or Arrow Keys</p>
+            <p>• <b>Hotbar:</b> Scroll or press number keys to select an item.</p>
+            <p>• <b>Tools:</b> Selected tools harvest, fight, and lose durability with use.</p>
+            <p>• <b>Torch:</b> Lasts 1 minute while selected at Night.</p>
+            <p>• <b>Scavenge:</b> Hold <b>SPACE</b> to auto-pickup nearby items.</p>
+            <p>• <b>Combat:</b> Use Axe or Pickaxe to fight off Wolves at Night.</p>
+        </div>
+    </div>
+    <button class="menu-btn primary" onclick="hideTutorial()">BACK</button>
+</div>
+
+<!-- HUD -->
+<div id="hud" class="overlay" style="display:none;">
+    <div class="stat-box hp-border"><span>HP</span><span id="hp-val">100</span></div>
+    <div id="hunger-box" class="stat-box hunger-border"><span id="hunger-label">HUNGER</span><span id="hunger-val">100</span></div>
+    <div id="survival-alert" style="display:none; color:var(--hunger); font-size:0.7rem; font-weight:bold; text-shadow:0 1px 2px #000;"></div>
+</div>
+
+<div id="inventory-container" class="overlay" style="display:none;">
+    <div id="inventory-bar"></div>
+</div>
+
+<div id="utility-bar" class="overlay" style="display:none;">
+    <div class="util-item" style="border-color:var(--hunger);" onclick="toggleBuildMenu()">🏗️ BLUEPRINTS</div>
+</div>
+<div id="chat-box" class="overlay" style="display:none; position:absolute; left:20px; bottom:90px; width:min(360px, calc(100vw - 40px)); z-index:1500; pointer-events:auto;">
+    <div id="chat-display" style="background:rgba(10,10,10,0.18); border:1px solid rgba(255,255,255,0.12); border-bottom:none; max-height:190px; overflow-y:auto; padding:8px 10px; font-size:0.68rem; line-height:1.4; backdrop-filter: blur(2px);"></div>
+    <div style="display:flex; gap:6px; background:rgba(0,0,0,0.18); border:1px solid rgba(255,255,255,0.12); padding:6px; backdrop-filter: blur(2px);">
+        <input id="chat-input" type="text" maxlength="180" placeholder="Type to chat..." style="flex:1; background:rgba(0,0,0,0.2); color:white; border:1px solid rgba(255,255,255,0.18); padding:8px; font-size:0.75rem;" />
+        <button class="menu-btn" style="min-width:auto; padding:6px 12px; margin:0;" onclick="sendChatMessage()">SEND</button>
+    </div>
+</div>
+<div id="placement-controls"><span id="placement-label">PLACING</span><button id="placement-cancel" class="menu-btn" onclick="cancelPlacement()" title="Cancel placement">X</button></div>
+
+<!-- OVERLAYS -->
+<div id="build-menu-overlay" class="screen" style="display:none;">
+    <h2 style="color:white; letter-spacing: 6px;">BLUEPRINTS</h2>
+    <p id="blueprint-subtitle">SELECT A RECIPE TO CRAFT OR PLACE</p>
+    <div id="science-warning" style="color:var(--gold); font-weight:bold; font-size:0.7rem; margin-bottom:10px; display:none;">🔬 STAND NEAR A SCIENCE MACHINE TO UNLOCK TECH</div>
+    <div id="blueprint-tabs"></div>
+    <div id="blueprint-summary"></div>
+    <div id="blueprint-feedback"></div>
+    <div class="build-grid" id="build-grid-content"></div>
+    <button class="menu-btn" onclick="closeBuildMenu()">EXIT</button>
+</div>
+
+<div id="world-map-overlay" class="screen" style="display:none;">
+    <h2>WORLD MAP</h2>
+    <canvas id="world-map-canvas" width="1000" height="1000"></canvas>
+    <div id="world-map-controls"><button class="menu-btn map-control" onclick="changeMapZoom(-0.25)">-</button><span id="world-map-zoom-label">100%</span><button class="menu-btn map-control" onclick="changeMapZoom(0.25)">+</button><button class="menu-btn map-control" onclick="resetMapZoom()">1:1</button></div>
+    <div id="world-map-caption">PRESS M OR CLOSE TO RETURN</div>
+    <button class="menu-btn" onclick="toggleWorldMap()">CLOSE MAP</button>
+</div>
+
+<!-- CHEST / STORAGE OVERLAY -->
+<div id="chest-menu-overlay" class="screen" style="display:none;">
+    <h2>CHEST</h2>
+    <div id="chest-storage-ui" style="display:flex; gap:18px; flex-wrap:wrap; justify-content:center;">
+        <div class="storage-panel">
+            <div class="storage-panel-header">CHEST STORAGE</div>
+            <div class="storage-grid" id="chest-storage-grid"></div>
+        </div>
+        <div class="storage-panel">
+            <div class="storage-panel-header">YOUR INVENTORY</div>
+            <div class="storage-grid" id="player-storage-grid"></div>
+        </div>
+    </div>
+    <div style="display:flex; gap:8px; justify-content:center; margin-top:12px;">
+        <button class="menu-btn" onclick="closeChest()">CLOSE</button>
+    </div>
+</div>
+
+<div id="top-controls" class="overlay" style="display:none;">
+    <div id="minimap-container"><canvas id="minimap-canvas"></canvas></div>
+    <button class="menu-btn" style="min-width:auto; padding:5px 12px;" onclick="pauseGame()">PAUSE</button>
+</div>
+
+<div id="pause-screen" class="screen" style="display:none;">
+    <h2>PAUSED</h2>
+    <button class="menu-btn primary" onclick="resumeGame()">RESUME</button>
+    <button class="menu-btn" style="border-color:var(--gold); color:var(--gold);" onclick="saveGame()">SAVE SECTOR</button>
+    <button class="menu-btn" style="border-color:var(--success); color:var(--success);" onclick="saveGame(true)">DOWNLOAD .SAVE</button>
+    <div id="save-status" style="min-height:1em; color:#888; font-size:0.75rem;"></div>
+    <div id="online-room-code" style="display:none; color:var(--gold); font-size:0.75rem;"></div>
+    <button class="menu-btn" style="border-color:var(--success); color:var(--success);" onclick="saveAndQuit()">SAVE AND QUIT</button>
+    <button class="menu-btn" onclick="resetGame()">QUIT WITHOUT SAVING</button>
+</div>
+
+<div id="mobile-controls"><div id="joystick"></div></div>
+<input type="file" id="save-file-input" accept=".save,application/json" style="display:none;">
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const miniCanvas = document.getElementById('minimap-canvas');
+const miniCtx = miniCanvas.getContext('2d');
+
+// Lighting Buffer
+const lightCanvas = document.createElement('canvas');
+const lctx = lightCanvas.getContext('2d');
+
+const TARGET_WIDTH = 1600;
+let globalScale = 1.0, logicalWidth = 1600, logicalHeight = 900;
+let COLS = 520, ROWS = 520, cellSize = 40;
+let worldWidth = COLS * cellSize, worldHeight = ROWS * cellSize;
+const PLAYER_SPEED = 4.5;
+
+// SEEDED RANDOMNESS
+let worldSeed = Math.floor(Math.random() * 1000000);
+let currentRandomState = worldSeed;
+function seededRandom() {
+    currentRandomState = (currentRandomState * 1664525 + 1013904223) % 4294967296;
+    return currentRandomState / 4294967296;
+}
+
+const BIOMES = {
+    OCEAN: { color: '#001a33', passable: false },
+    LAKE: { color: '#0d3c5d', passable: true },
+    RIVER: { color: '#2b6e8f', passable: true },
+    SHALLOW_WATER: { color: '#4d8eaa', passable: true },
+    BAY: { color: '#235d7d', passable: true },
+    GULF: { color: '#1c4b67', passable: true },
+    BEACH: { color: '#d9c27c', passable: true },
+    PLAINS: { color: '#1a2e1a', passable: true },
+    FOREST: { color: '#0d1a0d', passable: true },
+    DESERT: { color: '#d1a95a', passable: true },
+    SNOW: { color: '#dfeaf7', passable: true },
+    MOUNTAIN: { color: '#222222', passable: true }
+};
+
+const BUILDINGS = {
+   axe: { twigs: 2, flint: 1, hp: 1, icon: '🪓', name: "Axe", type: 'item', reqLab: false, durability: 40 },
+   pickaxe: { twigs: 1, flint: 2, hp: 1, icon: '⛏️', name: "Pickaxe", type: 'item', reqLab: false, durability: 40 },
+    torch: { twigs: 2, wood: 5, hp: 1, icon: '🔦', name: "Torch", type: 'item', reqLab: false, duration: 60 * 60 },
+    shovel: { wood: 10, stone: 10, iron: 5, hp: 1, icon: '🧹', name: "Shovel", type: 'item', reqLab: true, durability: 30 },
+    campfire: { wood: 30, hp: 100, icon: '🔥', name: "Campfire", radius: 250, life: 360 * 60, reqLab: false },
+    wall: { wood: 5, hp: 500, icon: '🧱', name: "Wall", reqLab: false },
+    boat: { wood: 12, flint: 2, hp: 100, icon: '🛶', name: "Boat", reqLab: false },
+   chest: { wood: 12, stone: 8, hp: 400, icon: '📦', name: "Chest", reqLab: true },
+   research: { wood: 40, stone: 40, hp: 400, icon: '🔬', name: "Science Machine", reqLab: false },
+   extractor: { iron: 15, stone: 15, hp: 200, icon: '🦾', name: "Extractor", reqLab: true },
+   cooking: { wood: 15, hp: 300, icon: '🍳', name: "Kitchen", reqLab: true },
+   door: { iron: 10, wood: 10, hp: 450, icon: '🚪', name: "Airlock", reqLab: true },
+   acorn: { icon: '🌰', name: 'Acorn', type: 'item', reqLab: false }
+};
+
+const ITEM_ICONS = { wood: '🌲', stone: '🪨', iron: '⛓️', twigs: '🥢', flint: '🔷', axe: '🪓', pickaxe: '⛏️', torch: '🔦', shovel: '🪏', berries: '🍒', carrots: '🥕', paste: '🧪', acorn: '🌰', chest: '📦' };
+const PLAYER_COLORS = ['#00f2ff', '#ffcc00', '#2ecc71', '#ff00ff', '#ffffff', '#ff9900'];
+const PLAYER_EMOJIS = ['🤠', '😃', '🙃', '🙂', '😑', '😐', '🫤'];
+
+const QUOTES = [
+    "TIP: Select tools and light sources on your hotbar before using them.",
+    "TIP: Trees leave stumps! Clear them with a 🧹 Shovel.",
+    "TIP: Hold a 🔦 Torch at night to see where you're going.",
+    "TIP: Items like twigs no longer spawn on top of trees.",
+    "TEASE: The darkness is absolute. Don't let your torch die.",
+    "TIP: Click food in your pack to eat it instantly!",
+    "TEASE: Dusk warning gives you time to build a campfire.",
+    "TIP: Torches only last 1 minute of active use. Plan ahead.",
+    "TEASE: Did you see the elephant? It's real.",
+    "JOKE: Why carry a torch? Because the campfire is heavy.",
+    "TIP: Berries restore 15 hunger. Carrots restore 15.",
+    "JOKE: If you see a carrot, it's not a trap. Probably."
+];
+
+let worldGrid = [], discoveredGrid = new Uint8Array(COLS * ROWS);
+let resourceNodes = [], buildings = [], currentState = 'MENU', mobs = [];
+let frameCount = 0, darknessExposure = 0, hungerAlertLevel = 0;
+let keys = {}, camera = { x: 0, y: 0 }, unlocked = { door: false }, buildMode = 'none', isPlacing = false;
+let player = { 
+    x: worldWidth/2, y: worldHeight/2, color: '#00f2ff', emoji: '🤠',
+    hp: 100, hunger: 100, isDowned: false, reviveProgress: 0,
+    inBoat: false, boatId: null,
+    inventory: Array(15).fill(null).map(() => ({ type: null, count: 0, duration: 0, maxDuration: 0 }))
+};
+let selectedHotbarIndex = 0;
+let worldConfig = { resMult: 1, foodMult: 1, dayMult: 1, nightMult: 1, hungerMult: 1, oceanMult: 1, forestMult: 1, mountainMult: 1, wildlifeMult: 1, worldSize: 1, mapPreset: 'standard', creative: false };
+let dayCount = 1, wolfWaveSpawned = false;
+let blueprintCategory = 'ALL';
+let autosaveTimer = null;
+let isMapOpen = false;
+let pendingMode = 'solo', pendingVisibility = 'public', gameSocket = null, onlineRoom = '', onlinePlayerId = crypto.randomUUID(), remotePlayers = {}, onlineName = 'SURVIVOR';
+let inputSequence = 0, lastServerSequence = 0;
+const GAME_SERVER_URL = 'wss://game-server.crazyfunnyboy265.workers.dev/ws';
+let mapZoom = 1;
+let mapPan = { x: 0, y: 0 }, mapDrag = null;
+let mapTerrainCanvas = document.createElement('canvas'), mapTerrainDirty = true;
+mapTerrainCanvas.width = COLS; mapTerrainCanvas.height = ROWS;
+let placementMouse = { x: worldWidth / 2, y: worldHeight / 2 };
+const worldMapCanvas = document.getElementById('world-map-canvas');
+const worldMapCtx = worldMapCanvas.getContext('2d');
+
+const CYCLE = {
+    DAY: { length: 240 * 60, label: 'DAYLIGHT', color: 0 },
+    DUSK: { length: 60 * 60, label: 'DUSK', color: 0.65 },
+    NIGHT: { length: 180 * 60, label: 'NIGHT', color: 1.0 }
+};
+let currentPhase = 'DAY', phaseTimeLeft = CYCLE.DAY.length;
+
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    globalScale = canvas.width / TARGET_WIDTH;
+    logicalWidth = TARGET_WIDTH;
+    logicalHeight = canvas.height / globalScale;
+    miniCanvas.width = 210;
+    miniCanvas.height = 140;
+    lightCanvas.width = canvas.width;
+    lightCanvas.height = canvas.height;
+}
+
+function displayRandomQuote() {
+    const el = document.getElementById('menu-quote');
+    if (el) el.innerText = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+}
+
+function randomizePlayerIdentity() {
+    player.color = PLAYER_COLORS[Math.floor(Math.random() * PLAYER_COLORS.length)];
+    player.emoji = PLAYER_EMOJIS[Math.floor(Math.random() * PLAYER_EMOJIS.length)];
+}
+
+function damagePlayer(amount) {
+    if (worldConfig.creative) return;
+    player.hp -= amount;
+}
+
+function setConnectionStatus(message, color = '#888') {
+    const status = document.getElementById('connection-status');
+    if (status) { status.innerText = message; status.style.color = color; }
+}
+
+function connectToGameServer() {
+    if (gameSocket) gameSocket.close();
+    const room = encodeURIComponent(onlineRoom || 'public');
+    setConnectionStatus('CONNECTING...', '#ffcc00');
+    try { gameSocket = new WebSocket(`${GAME_SERVER_URL}?room=${room}`); }
+    catch (error) { setConnectionStatus('OFFLINE MODE', '#ff4444'); return; }
+    gameSocket.onopen = () => {
+        setConnectionStatus('CONNECTED', '#2ecc71');
+        gameSocket.send(JSON.stringify({ type: 'join', roomId: onlineRoom || 'public', roomName: onlineRoom, visibility: pendingVisibility, playerId: onlinePlayerId, seed: worldSeed, preset: worldConfig.mapPreset, player: { x: player.x, y: player.y, emoji: player.emoji, color: player.color, name: onlineName } }));
+    };
+    gameSocket.onmessage = event => {
+        try {
+            const message = JSON.parse(event.data);
+            if (message.type === 'players') {
+                // message.players is an object of playerId => playerState
+                const players = message.players || {};
+                remotePlayers = {};
+                Object.entries(players).forEach(([pid, pstate]) => {
+                    if (pid === onlinePlayerId) {
+                        // authoritative local player state
+                        player = { ...player, ...pstate };
+                        normalizeInventory();
+                        renderInventory();
+                    } else {
+                        updateRemotePlayer(pid, pstate);
+                    }
+                });
+            }
+
+            if (message.type === 'player:update') {
+                if (message.playerId === onlinePlayerId) {
+                    player = { ...player, ...message.player };
+                    normalizeInventory(); renderInventory(); lastServerSequence = Math.max(lastServerSequence, message.sequence || 0);
+                } else updateRemotePlayer(message.playerId, message.player);
+            }
+
+            if (message.type === 'player:join') updateRemotePlayer(message.playerId, message.player);
+            if (message.type === 'player:leave') delete remotePlayers[message.playerId];
+            if (message.type === 'chat:message') handleChatMessage(message);
+            if (message.type === 'room:init') {
+                const room = message.room || {};
+                if (room.seed) worldSeed = Number(room.seed) || worldSeed;
+                if (!room.world && room.seed) {
+                    generateOrganicMap();
+                }
+                if (room.world) {
+                    if (room.world.preset) worldConfig.mapPreset = room.world.preset;
+                    const serverCols = Number(room.world.cols), serverRows = Number(room.world.rows);
+                    if (serverCols > 0 && serverRows > 0 && (serverCols !== COLS || serverRows !== ROWS)) {
+                        COLS = serverCols; ROWS = serverRows;
+                        worldWidth = COLS * cellSize; worldHeight = ROWS * cellSize;
+                        mapTerrainCanvas.width = COLS; mapTerrainCanvas.height = ROWS;
+                    }
+                    worldGrid = room.world.grid || worldGrid;
+                    buildings = room.world.buildings || buildings;
+                    resourceNodes = room.world.resources || resourceNodes;
+                    discoveredGrid = room.world.discoveredGrid ? Uint8Array.from(room.world.discoveredGrid) : discoveredGrid;
+                    mapTerrainDirty = true;
+                    if (room.world.seed) worldSeed = Number(room.world.seed) || worldSeed;
+                }
+                if (!worldGrid.length && room.seed) {
+                    worldSeed = Number(room.seed) || worldSeed;
+                    generateOrganicMap();
+                }
+                if (worldGrid.length && (!player.x && !player.y)) {
+                    player.x = worldWidth / 2;
+                    player.y = worldHeight / 2;
+                }
+            }
+            if (message.type === 'world:sync') {
+                // authoritative world state
+                worldGrid = message.world.grid || worldGrid;
+                buildings = message.world.buildings || buildings;
+                resourceNodes = message.world.resources || resourceNodes;
+                discoveredGrid = message.world.discoveredGrid ? Uint8Array.from(message.world.discoveredGrid) : discoveredGrid;
+                mapTerrainDirty = true;
+            }
+            if (message.type === 'discovered:update') {
+                // message.tiles: array of indices set to 1
+                (message.tiles || []).forEach(idx => { if (idx >=0 && idx < discoveredGrid.length) discoveredGrid[idx] = 1; });
+                mapTerrainDirty = true;
+            }
+        } catch (error) { setConnectionStatus('INVALID SERVER MESSAGE', '#ff4444'); }
+    };
+    gameSocket.onclose = () => { setConnectionStatus('DISCONNECTED - PLAYING OFFLINE', '#ff4444'); gameSocket = null; };
+    gameSocket.onerror = () => setConnectionStatus('SERVER UNAVAILABLE', '#ff4444');
+}
+
+function updateRemotePlayer(playerId, playerState) {
+    if (playerId === onlinePlayerId || !playerState) return;
+    const previous = remotePlayers[playerId];
+    remotePlayers[playerId] = { ...playerState, renderX: previous?.renderX ?? playerState.x, renderY: previous?.renderY ?? playerState.y, targetX: playerState.x, targetY: playerState.y };
+}
+
+function disconnectFromGameServer() {
+    if (gameSocket?.readyState === WebSocket.OPEN) gameSocket.send(JSON.stringify({ type: 'leave', roomId: onlineRoom, playerId: onlinePlayerId }));
+    gameSocket?.close(); gameSocket = null; remotePlayers = {};
+}
+
+function stopMovement() {
+    keys['KeyW'] = keys['ArrowUp'] = keys['KeyS'] = keys['ArrowDown'] = 
+    keys['KeyA'] = keys['ArrowLeft'] = keys['KeyD'] = keys['ArrowRight'] = false;
+}
+
+function isAnyOverlayActive() {
+    const overlayIds = ['main-menu', 'init-choice', 'world-settings-screen', 'tutorial-screen', 'patch-notes-screen', 'build-menu-overlay', 'world-map-overlay', 'pause-screen'];
+    const chestOpen = document.getElementById('chest-menu-overlay')?.style.display === 'flex';
+    return chestOpen || overlayIds.some(id => {
+        const el = document.getElementById(id);
+        return el && (el.style.display === 'flex' || el.style.display === 'block');
+    });
+}
+
+function checkSavedGame() {
+    const loadBtn = document.getElementById('load-save-btn');
+    if (!loadBtn) return;
+    loadBtn.style.display = 'none';
+    const legacySave = localStorage.getItem('alone_survival_save');
+    if (legacySave) loadBtn.style.display = 'block';
+    if (!window.indexedDB) return;
+    const request = indexedDB.open('alone-survival', 1);
+    request.onupgradeneeded = () => request.result.createObjectStore('saves');
+    request.onsuccess = () => {
+        const transaction = request.result.transaction('saves', 'readonly');
+        transaction.objectStore('saves').get('current').onsuccess = event => {
+            if (event.target.result) loadBtn.style.display = 'block';
+        };
+    };
+}
+
+function saveToIndexedDB(save) {
+    return new Promise((resolve, reject) => {
+        if (!window.indexedDB) return reject(new Error('IndexedDB is unavailable.'));
+        const request = indexedDB.open('alone-survival', 1);
+        request.onupgradeneeded = () => request.result.createObjectStore('saves');
+        request.onerror = () => reject(request.error || new Error('Could not open local save storage.'));
+        request.onsuccess = () => {
+            const transaction = request.result.transaction('saves', 'readwrite');
+            transaction.objectStore('saves').put(save, 'current');
+            transaction.oncomplete = resolve;
+            transaction.onerror = () => reject(transaction.error || new Error('Could not write local save.'));
+        };
+    });
+}
+
+function loadFromIndexedDB() {
+    return new Promise((resolve, reject) => {
+        if (!window.indexedDB) return resolve(null);
+        const request = indexedDB.open('alone-survival', 1);
+        request.onupgradeneeded = () => request.result.createObjectStore('saves');
+        request.onerror = () => reject(request.error || new Error('Could not open local save storage.'));
+        request.onsuccess = () => {
+            const getRequest = request.result.transaction('saves', 'readonly').objectStore('saves').get('current');
+            getRequest.onsuccess = () => resolve(getRequest.result || null);
+            getRequest.onerror = () => reject(getRequest.error || new Error('Could not read local save.'));
+        };
+    });
+}
+
+function init() {
+    resize();
+    displayRandomQuote();
+    checkSavedGame();
+    window.addEventListener('keydown', e => {
+        const chatInput = document.getElementById('chat-input');
+        if (e.code === 'Enter' && document.activeElement === chatInput) { e.preventDefault(); sendChatMessage(); return; }
+        if (e.code === 'Escape' && isPlacing) { cancelPlacement(); return; }
+        if (e.code === 'KeyM' && currentState !== 'MENU') { toggleWorldMap(); return; }
+        if (e.code.startsWith('Digit') && Number(e.code.slice(5)) >= 1 && Number(e.code.slice(5)) <= 9) { selectHotbar(Number(e.code.slice(5)) - 1); return; }
+        if (isAnyOverlayActive()) {
+            if (e.code === 'KeyB' && document.getElementById('build-menu-overlay').style.display === 'flex') {
+                closeBuildMenu();
+            } else if ((e.code === 'KeyP' || e.code === 'Escape') && document.getElementById('pause-screen').style.display === 'flex') {
+                resumeGame();
+            }
+            return;
+        }
+
+        keys[e.code] = true;
+        if (e.code === 'KeyP' || e.code === 'Escape') {
+            if (pendingMode === 'online' || pendingMode === 'online-create') {
+                stopMovement();
+                return;
+            }
+            pauseGame();
+        }
+        if(e.code === 'KeyB') toggleBuildMenu();
+    });
+    window.addEventListener('keyup', e => keys[e.code] = false);
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            stopMovement();
+            if (gameSocket && gameSocket.readyState === WebSocket.OPEN) {
+                gameSocket.send(JSON.stringify({ type: 'input:update', roomId: onlineRoom, playerId: onlinePlayerId, sequence: ++inputSequence, input: { keys: {} } }));
+            }
+        }
+    });
+    window.addEventListener('wheel', e => { if (!isAnyOverlayActive()) selectHotbar(selectedHotbarIndex + (e.deltaY > 0 ? 1 : -1)); }, { passive: true });
+    window.addEventListener('resize', resize);
+    canvas.addEventListener('mousedown', handleInput);
+    canvas.addEventListener('mousemove', updatePlacementMouse);
+    worldMapCanvas.addEventListener('pointerdown', startMapDrag);
+    worldMapCanvas.addEventListener('pointermove', dragMap);
+    worldMapCanvas.addEventListener('pointerup', stopMapDrag);
+    worldMapCanvas.addEventListener('pointercancel', stopMapDrag);
+    worldMapCanvas.addEventListener('wheel', zoomMapAtCursor, { passive: false });
+    canvas.addEventListener('contextmenu', e => { e.preventDefault(); closeBuildMenu(); cancelPlacement(); });
+    setupMobile();
+    document.getElementById('save-file-input').addEventListener('change', handleSaveFile);
+    autosaveTimer = setInterval(() => { if (currentState === 'PLAYING') saveGame(false, true); }, 60000);
+    renderInventory();
+    gameLoop();
+}
+
+function resetGame() {
+    stopMovement();
+    disconnectFromGameServer();
+    currentState = 'MENU'; isPlacing = false;
+    player.hp = 100; player.hunger = 100; player.isDowned = false; player.reviveProgress = 0;
+    player.inventory = Array(15).fill(null).map(() => ({ type: null, count: 0, duration: 0, maxDuration: 0 }));
+    selectedHotbarIndex = 0;
+    buildings = []; resourceNodes = []; unlocked = { door: false }; mobs = [];
+    frameCount = 0; currentPhase = 'DAY'; phaseTimeLeft = CYCLE.DAY.length; darknessExposure = 0; hungerAlertLevel = 0;
+    dayCount = 1; wolfWaveSpawned = false;
+    discoveredGrid.fill(0); mapTerrainDirty = true; isMapOpen = false;
+    document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+    document.getElementById('main-menu').style.display = 'flex';
+    document.getElementById('hud').style.display = 'none';
+    document.getElementById('inventory-container').style.display = 'none';
+    document.getElementById('utility-bar').style.display = 'none';
+    document.getElementById('top-controls').style.display = 'none';
+    document.getElementById('clock-container').style.display = 'none';
+    document.getElementById('chat-box').style.display = 'none';
+    document.getElementById('online-room-code').style.display = 'none';
+    document.getElementById('darkness-warning').style.display = 'none';
+    const chatInput = document.getElementById('chat-input');
+    if (chatInput) chatInput.value = '';
+    cancelPlacement();
+    displayRandomQuote(); renderInventory();
+    checkSavedGame();
+}
+
+function encodeBytes(bytes) {
+    let binary = '';
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+    return btoa(binary);
+}
+
+function decodeBytes(value, expectedLength) {
+    const binary = atob(value);
+    if (binary.length !== expectedLength) throw new Error('Invalid save data length.');
+    const bytes = new Uint8Array(expectedLength);
+    for (let i = 0; i < expectedLength; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+}
+
+function createSaveData() {
+    const compactNodes = resourceNodes.map(node => [node.x, node.y, node.type, node.hp, node.maxHp, node.pickup ? 1 : 0]);
+    const savedPlayer = { ...player, inventory: player.inventory.map(slot => ({ ...slot })) };
+    return {
+        version: 6, seed: worldSeed, config: worldConfig, dayCount, currentPhase, phaseTimeLeft, darknessExposure, selectedHotbarIndex,
+        unlocked, player: savedPlayer, buildings, resourceNodes: compactNodes, mobs,
+        discoveredGrid: encodeBytes(discoveredGrid)
+    };
+}
+
+async function saveGame(download = false, silent = false) {
+    let save;
+    try {
+        save = JSON.stringify(createSaveData());
+    } catch (error) {
+        setSaveStatus(`Save failed: ${error.message}`, true);
+        return;
+    }
+    if (download) {
+        const blob = new Blob([save], { type: 'application/octet-stream' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `alone-sector-${new Date().toISOString().slice(0, 10)}.save`;
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => { URL.revokeObjectURL(link.href); link.remove(); }, 1000);
+    }
+    try {
+        await saveToIndexedDB(JSON.parse(save));
+        localStorage.removeItem('alone_survival_save');
+        checkSavedGame();
+        if (!silent) setSaveStatus(download ? 'Sector downloaded and saved locally.' : 'Sector saved locally.', false);
+    } catch (error) {
+        if (!silent) setSaveStatus(download ? 'Sector downloaded. Local save failed; keep the downloaded file.' : `Local save failed: ${error.message}`, true);
+    }
+    return true;
+}
+
+function applySave(save) {
+    if (!save || ![1, 2, 3, 4, 5, 6].includes(save.version) || !save.discoveredGrid) throw new Error('Unsupported or damaged save file.');
+    if (save.version === 1) {
+        const biomeMap = ['OCEAN', 'PLAINS', 'FOREST', 'MOUNTAIN'];
+        const flatGrid = decodeBytes(save.worldGrid, COLS * ROWS);
+        worldGrid = Array.from({ length: ROWS }, (_, y) => Array.from(flatGrid.slice(y * COLS, (y + 1) * COLS), value => biomeMap[value] || 'OCEAN'));
+    }
+    discoveredGrid = decodeBytes(save.discoveredGrid, COLS * ROWS);
+    worldSeed = save.seed; worldConfig = { ...worldConfig, ...save.config }; dayCount = save.dayCount;
+    currentPhase = save.currentPhase; phaseTimeLeft = save.phaseTimeLeft; darknessExposure = save.darknessExposure || 0;
+    unlocked = save.unlocked || { door: false }; player = { ...save.player, inventory: save.player.inventory.map(slot => ({ ...slot })) }; buildings = save.buildings || [];
+    if (save.version >= 2) {
+        generateOrganicMap();
+        player = { ...save.player, inventory: save.player.inventory.map(slot => ({ ...slot })) };
+        resourceNodes = (save.resourceNodes || []).map(node => ({ x: node[0], y: node[1], type: node[2], hp: node[3], maxHp: node[4], pickup: !!node[5], icon: node[2] === 'wood' ? '🌲' : ['stone', 'rocks', 'big_rock'].includes(node[2]) ? '🪨' : node[2] === 'iron' ? '⛓️' : node[2] === 'berries' ? '🍒' : node[2] === 'carrots' ? '🥕' : node[2] === 'twigs' ? '🥢' : node[2] === 'flint' ? '🔷' : node[2] === 'acorn' ? '🌰' : '🪵' }));
+    } else resourceNodes = save.resourceNodes || [];
+    selectedHotbarIndex = Math.max(0, Math.min(player.inventory.length - 1, save.selectedHotbarIndex || 0));
+    if (worldConfig.creative) { discoveredGrid.fill(1); mapTerrainDirty = true; }
+    normalizeInventory();
+    mobs = save.mobs || []; wolfWaveSpawned = false;
+    startGameUI(); currentState = 'PLAYING'; renderInventory();
+}
+
+function setSaveStatus(message, isError) {
+    const status = document.getElementById('save-status');
+    if (status) { status.textContent = message; status.style.color = isError ? '#ff4444' : '#2ecc71'; }
+}
+
+async function loadGame() {
+    try {
+        const save = await loadFromIndexedDB();
+        const legacySave = localStorage.getItem('alone_survival_save');
+        if (!save && !legacySave) throw new Error('No local save found.');
+        applySave(save || JSON.parse(legacySave));
+    }
+    catch (error) { displayChat({ name: 'SYSTEM', text: `Load failed: ${error.message}`, color: '#f00' }); }
+}
+
+async function saveAndQuit() {
+    await saveGame(false);
+    resetGame();
+}
+
+function handleSaveFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { try { applySave(JSON.parse(reader.result)); } catch (error) { displayChat({ name: 'SYSTEM', text: `File load failed: ${error.message}`, color: '#f00' }); } };
+    reader.readAsText(file);
+    event.target.value = '';
+}
+
+function showInitialize() { document.getElementById('main-menu').style.display = 'none'; document.getElementById('init-choice').style.display = 'flex'; }
+function prepareSettings(mode = 'solo') { pendingMode = mode; document.getElementById('init-choice').style.display = 'none'; document.getElementById('world-settings-screen').style.display = 'flex'; document.getElementById('room-creation-settings').style.display = mode === 'online-create' ? 'block' : 'none'; }
+function cancelSettings() { resetGame(); }
+function showOnlineProfile() { document.getElementById('main-menu').style.display = 'none'; document.getElementById('online-profile-screen').style.display = 'flex'; }
+async function continueToRooms() {
+    onlineName = document.getElementById('online-name').value.trim() || 'SURVIVOR';
+    player.emoji = document.getElementById('online-emoji').value;
+    player.name = onlineName;
+    document.getElementById('online-profile-screen').style.display = 'none';
+    document.getElementById('room-browser-screen').style.display = 'flex';
+    await refreshRooms();
+}
+function startRoomCreation() { document.getElementById('room-browser-screen').style.display = 'none'; prepareSettings('online-create'); }
+async function refreshRooms() {
+    const list = document.getElementById('public-room-list');
+    if (!list) return;
+    list.innerText = 'Loading rooms...';
+    try {
+        const response = await fetch(`${GAME_SERVER_URL.replace(/^wss:/, 'https:')}?rooms=public`);
+        const rooms = await response.json();
+        list.innerHTML = '';
+        if (!rooms.length) { list.innerText = 'No public games found.'; return; }
+        rooms.forEach(room => { const button = document.createElement('button'); button.className = 'blueprint-tab'; button.style.width = '100%'; button.style.textAlign = 'left'; button.innerText = `${room.name}  (${room.players || 0}/${room.maxPlayers || 16})`; button.onclick = () => joinRoom(room.code, 'public'); list.appendChild(button); });
+    } catch (error) { list.innerText = 'Room list unavailable.'; }
+}
+function joinPrivateRoom() { const code = document.getElementById('private-room-code').value.trim().toUpperCase(); if (/^[A-Z0-9]{6}$/.test(code)) joinRoom(code, 'private'); else document.getElementById('public-room-list').innerText = 'Enter a six-character code.'; }
+function joinRoom(code, visibility = 'private') { onlineRoom = code; pendingVisibility = visibility; pendingMode = 'online'; document.getElementById('room-browser-screen').style.display = 'none'; document.getElementById('online-room-code').innerText = `ROOM CODE: ${onlineRoom}`; document.getElementById('online-room-code').style.display = 'block'; worldConfig = { ...worldConfig, creative: false }; worldSeed = Math.floor(Math.random() * 1000000); player.hp = 100; player.hunger = 100; startGameUI(); currentState = 'PLAYING'; connectToGameServer(); }
+function showTutorial() { document.getElementById('main-menu').style.display = 'none'; document.getElementById('tutorial-screen').style.display = 'flex'; }
+function hideTutorial() { document.getElementById('tutorial-screen').style.display = 'none'; document.getElementById('main-menu').style.display = 'flex'; }
+function showPatchNotes() { document.getElementById('main-menu').style.display = 'none'; document.getElementById('patch-notes-screen').style.display = 'flex'; }
+function hidePatchNotes() { document.getElementById('patch-notes-screen').style.display = 'none'; document.getElementById('main-menu').style.display = 'flex'; }
+function confirmSettings() {
+    worldConfig = { resMult: +document.getElementById('set-res').value, foodMult: +document.getElementById('set-food').value, dayMult: +document.getElementById('set-day').value, nightMult: +document.getElementById('set-night').value, hungerMult: +document.getElementById('set-hunger').value, oceanMult: +document.getElementById('set-ocean').value, forestMult: +document.getElementById('set-forest').value, mountainMult: +document.getElementById('set-mountain').value, wildlifeMult: +document.getElementById('set-wildlife').value, worldSize: +document.getElementById('set-world-size').value, mapPreset: document.getElementById('set-map-preset').value, creative: document.getElementById('set-creative').checked };
+    player.hp = 100; player.hunger = 100; player.emoji = document.getElementById('set-emoji').value;
+    worldSeed = Math.floor(Math.random() * 1000000); generateOrganicMap();
+    if (worldConfig.creative) { discoveredGrid.fill(1); mapTerrainDirty = true; }
+    startGameUI(); currentState = 'PLAYING';
+    if (pendingMode === 'online-create') createOnlineRoom();
+}
+async function readRoomSavePayload() {
+    const fileInput = document.getElementById('room-save-file-input');
+    if (!fileInput || !fileInput.files || !fileInput.files[0]) return createSaveData();
+    const file = fileInput.files[0];
+    try {
+        const text = await file.text();
+        return JSON.parse(text);
+    } catch (error) {
+        throw new Error(`Could not read room save: ${error.message}`);
+    }
+}
+
+async function createOnlineRoom() {
+try {
+    const saveData = await readRoomSavePayload();
+    const response = await fetch(`${GAME_SERVER_URL.replace(/^wss:/, 'https:')}?create=room`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            name: `${onlineName}'s game`,
+            visibility: document.getElementById('room-visibility').value,
+            save: saveData
+        })
+    });
+    const room = await response.json();
+    if (!response.ok) throw new Error(room.error || 'Could not create room.');
+    onlineRoom = room.code; pendingVisibility = room.visibility; document.getElementById('creation-code-preview').innerText = room.visibility === 'private' ? `PRIVATE CODE: ${room.code}` : 'PUBLIC GAME';
+    if (saveData && saveData.player) {
+        player = { ...player, ...saveData.player, inventory: Array.isArray(saveData.player.inventory) ? saveData.player.inventory.map(slot => ({ ...slot })) : player.inventory };
+        if (saveData.resourceNodes) resourceNodes = saveData.resourceNodes.map(node => ({ x: node[0], y: node[1], type: node[2], hp: node[3], maxHp: node[4], pickup: !!node[5], icon: node[2] === 'wood' ? '🌲' : ['stone', 'rocks', 'big_rock'].includes(node[2]) ? '🪨' : node[2] === 'iron' ? '⛓️' : node[2] === 'berries' ? '🍒' : node[2] === 'carrots' ? '🥕' : node[2] === 'twigs' ? '🥢' : node[2] === 'flint' ? '🔷' : node[2] === 'acorn' ? '🌰' : '🪵' }));
+        if (saveData.buildings) buildings = saveData.buildings;
+    }
+    worldSeed = Math.floor(Math.random() * 1000000); player.hp = 100; player.hunger = 100; document.getElementById('online-room-code').innerText = `ROOM CODE: ${room.code}`; document.getElementById('online-room-code').style.display = 'block'; startGameUI(); currentState = 'PLAYING'; connectToGameServer();
+} catch (error) { document.getElementById('creation-status').innerText = `ROOM ERROR: ${error.message}`; }
+}
+function startGameUI() {
+    document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+   const isOnline = pendingMode === 'online' || pendingMode === 'online-create';
+   ['hud', 'inventory-container', 'utility-bar', 'top-controls', 'clock-container'].forEach(id => {
+       const el = document.getElementById(id);
+       if (!el) return;
+       el.style.display = id === 'clock-container' ? 'block' : 'flex';
+   });
+   const chatBox = document.getElementById('chat-box');
+   if (chatBox) chatBox.style.display = isOnline ? 'block' : 'none';
+   const roomCode = document.getElementById('online-room-code');
+   if (roomCode) roomCode.style.display = isOnline && onlineRoom ? 'block' : 'none';
+}
+
+function renderInventory() {
+    const bar = document.getElementById('inventory-bar');
+    if(!bar) return;
+    bar.innerHTML = '';
+
+    player.inventory.forEach((slot, index) => {
+        const div = document.createElement('div'); div.className = `inv-slot ${index === selectedHotbarIndex ? 'selected' : ''}`;
+        div.onclick = () => invClick(index);
+        div.innerHTML = `<span class="slot-number">${index + 1}</span>`;
+        if(slot && slot.type) {
+            div.innerHTML += `<span>${ITEM_ICONS[slot.type] || '❓'}</span><span class="count">${slot.count}</span><div class="dur-bar"></div>`;
+            if (slot.maxDuration > 0) {
+                div.querySelector('.dur-bar').style.width = Math.max(0, slot.duration / slot.maxDuration * 100) + '%';
+            }
+        }
+        bar.appendChild(div);
+    });
+}
+
+function selectHotbar(index) {
+    selectedHotbarIndex = (index + player.inventory.length) % player.inventory.length;
+    renderInventory();
+}
+
+function invClick(index) {
+    let slot = player.inventory[index];
+    if(!slot || !slot.type) return;
+    if (['berries', 'carrots', 'paste'].includes(slot.type)) { consume(index); return; }
+    selectHotbar(index);
+}
+
+function getActiveItem() { return player.inventory[selectedHotbarIndex]; }
+
+function normalizeInventory() {
+    player.inventory.forEach(slot => {
+        const data = BUILDINGS[slot.type];
+        if (data?.durability && !slot.maxDuration) {
+            slot.count = 1;
+            slot.duration = data.durability;
+            slot.maxDuration = data.durability;
+        }
+    });
+}
+
+function useToolDurability() {
+    const item = getActiveItem();
+    if (worldConfig.creative || !item || !item.type || !item.maxDuration) return;
+    item.duration--;
+    if (item.duration <= 0) {
+        displayChat({ name: 'SYSTEM', text: `Your ${item.type} broke.`, color: '#f00' });
+        item.type = null; item.count = 0; item.duration = 0; item.maxDuration = 0;
+    } else if (item.duration <= item.maxDuration * 0.2) {
+        displayChat({ name: 'SYSTEM', text: `Your ${item.type} is almost broken.`, color: '#ffa500' });
+    }
+    renderInventory();
+}
+
+function addToInv(type, amount) {
+    const data = BUILDINGS[type];
+    let slot = player.inventory.find(s => s.type === type);
+    if (slot && !data?.duration && !data?.durability) {
+        slot.count += amount;
+    } else {
+        let empty = player.inventory.find(s => s.type === null);
+        if (empty) {
+            empty.type = type;
+            empty.count = amount;
+            if (data?.duration || data?.durability) {
+                empty.duration = data.duration || data.durability;
+                empty.maxDuration = data.duration || data.durability;
+            }
+        }
+    }
+    renderInventory();
+}
+
+function consume(index) {
+    let slot = player.inventory[index];
+    if(!slot || !slot.type) return;
+    let fName = String(slot.type);
+    player.hunger = Math.min(100, player.hunger + (slot.type === 'paste' ? 30 : 15));
+    displayChat({ name: 'SYSTEM', text: `Consumed ${fName}.`, color: '#2ecc71' });
+    if(--slot.count <= 0) slot.type = null;
+    renderInventory();
+}
+
+function hasRes(reqs) {
+    if (worldConfig.creative) return true;
+    const keys = Object.keys(reqs).filter(k => !['hp', 'icon', 'name', 'reqLab', 'radius', 'life', 'desc', 'type', 'duration', 'durability'].includes(k));
+    for (let k of keys) {
+        const normalizedKey = k === 'rocks' ? 'flint' : k;
+        let slot = player.inventory.find(s => s.type === normalizedKey);
+        if(!slot || slot.count < reqs[k]) return false;
+    }
+    return true;
+}
+
+function payRes(reqs) {
+    if (worldConfig.creative) return;
+    const keys = Object.keys(reqs).filter(k => !['hp', 'icon', 'name', 'reqLab', 'radius', 'life', 'desc', 'type', 'duration', 'durability'].includes(k));
+    for (let k of keys) {
+        const normalizedKey = k === 'rocks' ? 'flint' : k;
+        let slot = player.inventory.find(s => s.type === normalizedKey);
+        if(slot) { slot.count -= reqs[k]; if(slot.count <= 0) slot.type = null; }
+    }
+    renderInventory();
+}
+
+function updateWorldDimensions() {
+    const scale = Number(worldConfig.worldSize || 1);
+    const base = 520;
+    COLS = Math.round(base * scale);
+    ROWS = Math.round(base * scale);
+    worldWidth = COLS * cellSize;
+    worldHeight = ROWS * cellSize;
+    worldGrid = [];
+    discoveredGrid = new Uint8Array(COLS * ROWS);
+    mapTerrainCanvas.width = COLS;
+    mapTerrainCanvas.height = ROWS;
+    player.x = worldWidth / 2;
+    player.y = worldHeight / 2;
+    placementMouse = { x: player.x, y: player.y };
+}
+
+function findNearestLandSpawn() {
+    let best = { x: Math.floor(COLS / 2), y: Math.floor(ROWS / 2) };
+    let bestDist = Infinity;
+    for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+            const biome = worldGrid[y]?.[x];
+            if (!biome || biome === 'OCEAN' || biome === 'LAKE') continue;
+            const dist = (x - COLS / 2) ** 2 + (y - ROWS / 2) ** 2;
+            if (dist < bestDist) {
+                bestDist = dist;
+                best = { x, y };
+            }
+        }
+    }
+
+    return { x: best.x * cellSize + 20, y: best.y * cellSize + 20 };
+}
+
+function generateOrganicMap() {
+    updateWorldDimensions();
+    worldGrid = [];
+    mapTerrainDirty = true;
+    currentRandomState = worldSeed;
+    const occupancy = new Uint8Array(COLS * ROWS);
+    const cX = COLS / 2;
+    const cY = ROWS / 2;
+    const mapPreset = worldConfig.mapPreset || 'standard';
+    const oceanScale = mapPreset === 'islands' ? Math.max(1.25, Number(worldConfig.oceanMult || 1)) : Math.max(0.4, Number(worldConfig.oceanMult || 1));
+    const removesOcean = ['dry', 'inland', 'riverlands'].includes(mapPreset);
+    const forestScale = Math.max(0.2, Number(worldConfig.forestMult || 1));
+    const mountainScale = Math.max(0.2, Number(worldConfig.mountainMult || 1));
+    const continentBias = 0.9 + (1.5 - oceanScale) * 0.35;
+
+    for (let y = 0; y < ROWS; y++) {
+        worldGrid[y] = [];
+        for (let x = 0; x < COLS; x++) {
+            const nx = (x - cX) / Math.max(40, COLS * 0.48);
+            const ny = (y - cY) / Math.max(40, ROWS * 0.48);
+            const radial = Math.hypot(nx, ny);
+            const warpX = x + Math.sin(y * 0.035 + worldSeed * 0.002) * 7;
+            const warpY = y + Math.cos(x * 0.032 - worldSeed * 0.002) * 7;
+            const largeBend = Math.sin((warpX + worldSeed * 0.03) * 0.05) * 0.90 + Math.cos((warpY - worldSeed * 0.02) * 0.055) * 0.75;
+            const detail = Math.sin((warpX * 0.11) + worldSeed * 0.0012) * 0.65 + Math.cos((warpY * 0.12) - worldSeed * 0.0018) * 0.60;
+            const ridge = Math.sin((x + y) * 0.06 + worldSeed * 0.0007) * 0.50;
+            const continent = (1.25 - radial * 1.8) + largeBend * 0.75 + detail * 0.4 + ridge * 0.3 + (1.25 - continentBias) * 0.30;
+            const oceanThreshold = 0.15 + (1.4 - oceanScale) * 0.08;
+
+            let biome = removesOcean ? 'PLAINS' : 'OCEAN';
+            if (removesOcean || continent > oceanThreshold) {
+                biome = 'PLAINS';
+                if (continent < 0.32) biome = 'BEACH';
+                if (Math.sin((x * 0.09) + worldSeed * 0.002) + Math.cos((y * 0.085) - worldSeed * 0.0025) > 1.1 && continent > 0.18) biome = 'DESERT';
+                const forestMask = Math.sin((x * 0.08) + worldSeed * 0.0022) + Math.cos((y * 0.07) - worldSeed * 0.002) + Math.sin((x + y) * 0.045);
+                if (forestMask > 1.2 && continent > 0.22) biome = 'FOREST';
+                if (radial > 0.82 && continent > 0.55) biome = 'MOUNTAIN';
+                if (radial > 0.90 && continent > 0.72) biome = 'SNOW';
+            } else if (continent > oceanThreshold - 0.08) {
+                biome = 'BEACH';
+            }
+
+            const lakeChance = Math.abs(Math.sin((x + worldSeed * 0.14) * 0.04)) < 0.12 && Math.abs(Math.cos((y - worldSeed * 0.16) * 0.05)) < 0.13 && continent > 0.14 && continent < 0.62;
+            const gulfChance = Math.abs(Math.sin((x + worldSeed * 0.09) * 0.07)) < 0.08 && Math.abs(Math.cos((y - worldSeed * 0.12) * 0.08)) < 0.09 && continent > 0.12 && continent < 0.48;
+            if (lakeChance && mapPreset !== 'dry') biome = 'LAKE';
+            if (gulfChance && !removesOcean) biome = 'GULF';
+            if (continent > 0.72 && Math.abs(Math.sin((x * 0.08) + worldSeed * 0.0015)) > 0.9) biome = 'MOUNTAIN';
+            if (['dry', 'inland'].includes(mapPreset) && biome === 'BEACH') biome = 'DESERT';
+            worldGrid[y][x] = biome;
+        }
+    }
+
+    const riverCount = mapPreset === 'dry' ? 0 : Math.max(2, Math.min(6, Math.round((COLS + ROWS) / 220)));
+    for (let i = 0; i < riverCount; i++) {
+        const startX = Math.floor(seededRandom() * COLS);
+        const startY = Math.floor(seededRandom() * ROWS);
+        let x = startX;
+        let y = startY;
+        const targetX = Math.floor(COLS * (0.3 + seededRandom() * 0.4));
+        const targetY = Math.floor(ROWS * (0.3 + seededRandom() * 0.4));
+        for (let step = 0; step < 420; step++) {
+            const dx = targetX - x;
+            const dy = targetY - y;
+            const dist = Math.max(1, Math.hypot(dx, dy));
+            x += Math.max(-2, Math.min(2, Math.round((dx / dist) * (1 + seededRandom() * 2.5))));
+            y += Math.max(-2, Math.min(2, Math.round((dy / dist) * (1 + seededRandom() * 2.5))));
+            x = Math.max(0, Math.min(COLS - 1, x));
+            y = Math.max(0, Math.min(ROWS - 1, y));
+            for (let yy = Math.max(0, y - 1); yy <= Math.min(ROWS - 1, y + 1); yy++) {
+                for (let xx = Math.max(0, x - 1); xx <= Math.min(COLS - 1, x + 1); xx++) {
+                    if (worldGrid[yy][xx] !== 'OCEAN' && worldGrid[yy][xx] !== 'LAKE') {
+                        worldGrid[yy][xx] = 'RIVER';
+                    }
+                }
+            }
+        }
+    }
+
+    for (let i = 0; i < (mapPreset === 'dry' ? 0 : 10); i++) {
+        const cx = Math.floor(seededRandom() * COLS);
+        const cy = Math.floor(seededRandom() * ROWS);
+        const radius = 6 + Math.floor(seededRandom() * 14);
+        for (let y = Math.max(0, cy - radius); y < Math.min(ROWS, cy + radius); y++) {
+            for (let x = Math.max(0, cx - radius); x < Math.min(COLS, cx + radius); x++) {
+                if (Math.hypot(x - cx, y - cy) < radius && worldGrid[y][x] !== 'OCEAN' && worldGrid[y][x] !== 'SNOW') {
+                    worldGrid[y][x] = 'LAKE';
+                }
+            }
+        }
+    }
+
+    for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+            const biome = worldGrid[y][x];
+            if (biome === 'OCEAN' || biome === 'LAKE' || biome === 'RIVER' || biome === 'BAY' || biome === 'GULF') continue;
+            const west = x > 0 ? worldGrid[y][x - 1] : null;
+            const east = x < COLS - 1 ? worldGrid[y][x + 1] : null;
+            const north = y > 0 ? worldGrid[y - 1][x] : null;
+            const south = y < ROWS - 1 ? worldGrid[y + 1][x] : null;
+            if ([west, east, north, south].some(tile => ['OCEAN', 'LAKE', 'RIVER', 'BAY', 'GULF'].includes(tile))) {
+                worldGrid[y][x] = 'BEACH';
+            }
+        }
+    }
+
+    if (['dry', 'inland'].includes(mapPreset)) {
+        for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (worldGrid[y][x] === 'BEACH') worldGrid[y][x] = 'DESERT';
+    }
+
+    for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+            if (worldGrid[y][x] !== 'OCEAN') continue;
+            const neighbors = [worldGrid[y]?.[x - 1], worldGrid[y]?.[x + 1], worldGrid[y - 1]?.[x], worldGrid[y + 1]?.[x]];
+            if (neighbors.includes('BEACH')) worldGrid[y][x] = 'SHALLOW_WATER';
+        }
+    }
+
+    for (let i = 0; i < 500 * forestScale; i++) {
+        const cx = Math.floor(seededRandom() * COLS);
+        const cy = Math.floor(seededRandom() * ROWS);
+        const radius = 14 + Math.floor(seededRandom() * 18);
+        for (let y = Math.max(0, cy - radius); y < Math.min(ROWS, cy + radius); y++) {
+            for (let x = Math.max(0, cx - radius); x < Math.min(COLS, cx + radius); x++) {
+                if (Math.hypot(x - cx, y - cy) < radius && !['OCEAN', 'LAKE', 'RIVER', 'BEACH', 'MOUNTAIN'].includes(worldGrid[y][x])) {
+                    worldGrid[y][x] = 'FOREST';
+                }
+            }
+        }
+    }
+
+    for (let i = 0; i < 300 * mountainScale; i++) {
+        const cx = Math.floor(seededRandom() * COLS);
+        const cy = Math.floor(seededRandom() * ROWS);
+        const radius = 10 + Math.floor(seededRandom() * 14);
+        for (let y = Math.max(0, cy - radius); y < Math.min(ROWS, cy + radius); y++) {
+            for (let x = Math.max(0, cx - radius); x < Math.min(COLS, cx + radius); x++) {
+                if (Math.hypot(x - cx, y - cy) < radius && !['OCEAN', 'LAKE', 'RIVER', 'BEACH'].includes(worldGrid[y][x])) {
+                    worldGrid[y][x] = 'MOUNTAIN';
+                }
+            }
+        }
+    }
+
+    resourceNodes = [];
+    mobs = [];
+
+    const isBarrenZone = (x, y) => {
+        const patch = Math.sin(x * 0.021 + worldSeed * 0.001) + Math.cos(y * 0.019 - worldSeed * 0.0013);
+        return patch > 1.82 && Math.sin((x + y) * 0.013) > 0.35;
+    };
+
+    for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+            const b = worldGrid[y][x];
+            if (['OCEAN', 'LAKE', 'RIVER', 'SHALLOW_WATER', 'BAY', 'GULF'].includes(b)) continue;
+            if (isBarrenZone(x, y)) continue;
+            const treeType = b === 'BEACH' ? 'palm' : b === 'SNOW' ? 'snow' : b === 'DESERT' ? 'cactus' : 'forest';
+            const roll = seededRandom();
+            if (roll < 0.12 * worldConfig.resMult) {
+                if (b === 'FOREST' || b === 'BEACH' || b === 'SNOW') {
+                    resourceNodes.push({ x: x * cellSize, y: y * cellSize, type: 'wood', icon: b === 'BEACH' ? '🌴' : b === 'SNOW' ? '🌲' : '🌳', hp: 5, maxHp: 5, biome: treeType });
+                    occupancy[y * COLS + x] = 1;
+                } else if (b === 'MOUNTAIN') {
+                    const isIron = seededRandom() < 0.24;
+                    resourceNodes.push({ x: x * cellSize, y: y * cellSize, type: isIron ? 'iron' : 'big_rock', icon: isIron ? '⛓️' : '🪨', hp: isIron ? 8 : 10, maxHp: isIron ? 8 : 10 });
+                    occupancy[y * COLS + x] = 1;
+                }
+            }
+        }
+    }
+
+    for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+            if (occupancy[y * COLS + x]) continue;
+            const b = worldGrid[y][x];
+            if (['OCEAN', 'LAKE', 'RIVER', 'SHALLOW_WATER', 'BAY', 'GULF'].includes(b)) continue;
+            if (isBarrenZone(x, y)) continue;
+            const roll = seededRandom();
+            if (roll < 0.08 * worldConfig.resMult) {
+                if (b === 'BEACH') {
+                    if (seededRandom() < 0.35) resourceNodes.push({ x: x * cellSize, y: y * cellSize, type: 'twigs', icon: '🥢', pickup: true });
+                    if (seededRandom() < 0.1 * worldConfig.foodMult) resourceNodes.push({ x: x * cellSize, y: y * cellSize, type: 'berries', icon: '🍒', pickup: true });
+                } else if (b === 'PLAINS' || b === 'DESERT') {
+                    if (seededRandom() < 0.18 * worldConfig.resMult) resourceNodes.push({ x: x * cellSize, y: y * cellSize, type: 'flint', icon: '🔷', pickup: true });
+                    if (seededRandom() < 0.035 * worldConfig.foodMult) resourceNodes.push({ x: x * cellSize, y: y * cellSize, type: 'carrots', icon: '🥕', pickup: true });
+                    if (seededRandom() < 0.01 * worldConfig.wildlifeMult) mobs.push({ x: x * cellSize, y: y * cellSize, emoji: '🐘', tx: x * cellSize, ty: y * cellSize, hp: 100, maxHp: 100 });
+                } else if (b === 'FOREST' || b === 'SNOW') {
+                    if (seededRandom() < 0.22) resourceNodes.push({ x: x * cellSize, y: y * cellSize, type: 'twigs', icon: '🥢', pickup: true });
+                    if (seededRandom() < 0.18) resourceNodes.push({ x: x * cellSize, y: y * cellSize, type: 'acorn', icon: '🌰', pickup: true });
+                    if (seededRandom() < 0.12 * worldConfig.foodMult) resourceNodes.push({ x: x * cellSize, y: y * cellSize, type: 'berries', icon: '🍒', pickup: true });
+                }
+            }
+        }
+    }
+
+    for (let i = 0; i < 12; i++) {
+        const x = Math.floor(seededRandom() * (COLS - 8)) + 4;
+        const y = Math.floor(seededRandom() * (ROWS - 8)) + 4;
+        if (!['PLAINS', 'DESERT', 'FOREST'].includes(worldGrid[y][x]) || isBarrenZone(x, y)) continue;
+        const walls = [[-1, -1], [0, -1], [1, -1], [-1, 1], [1, 1], [-1, 0], [1, 0]];
+        walls.forEach(([ox, oy]) => buildings.push({ x: (x + ox) * cellSize, y: (y + oy) * cellSize, type: 'wall', hp: 500, maxHp: 500 }));
+        if (seededRandom() < 0.7) {
+            const inventory = Array.from({ length: 10 }, () => ({ type: null, count: 0 }));
+            const loot = [['wood', 4], ['stone', 3], ['flint', 2], ['twigs', 3], ['berries', 2]];
+            loot.slice(0, 2 + Math.floor(seededRandom() * 3)).forEach(([type, count], index) => { inventory[index] = { type, count }; });
+            buildings.push({ x: x * cellSize, y: y * cellSize, type: 'chest', hp: 400, maxHp: 400, inventory });
+        }
+    }
+
+    const spawn = findNearestLandSpawn();
+    player.x = spawn.x;
+    player.y = spawn.y;
+    player.inBoat = false;
+    player.boatId = null;
+    placementMouse = { x: player.x, y: player.y };
+}
+
+function seedBiome(cx, cy, type, size) {
+    const sX = Math.max(0, Math.floor(cx-size)), eX = Math.min(COLS, Math.ceil(cx+size));
+    const sY = Math.max(0, Math.floor(cy-size)), eY = Math.min(ROWS, Math.ceil(cy+size));
+    for(let y=sY; y<eY; y++) for(let x=sX; x<eX; x++) if(worldGrid[y][x] !== 'OCEAN' && Math.sqrt((x-cx)**2+(y-cy)**2) < size * seededRandom()*2) worldGrid[y][x] = type;
+}
+
+let _discoveryThrottleCounter = 0;
+function updateDiscovery() {
+    if ((frameCount % 3) !== 0) return;
+    // Throttle discovery updates in creative mode to reduce CPU when many tiles
+    if (worldConfig.creative) { if ((_discoveryThrottleCounter++ % 6) !== 0) return; }
+    const px = Math.floor(player.x/40), py = Math.floor(player.y/40);
+    const newly = [];
+    for(let y=py-8; y<=py+8; y++) for(let x=px-8; x<=px+8; x++) if(x>=0&&x<COLS&&y>=0&&y<ROWS&&Math.sqrt((x-px)**2+(y-py)**2)<=8 && !discoveredGrid[y*COLS+x]) { discoveredGrid[y*COLS+x]=1; newly.push(y*COLS+x); }
+    if (newly.length) mapTerrainDirty = true;
+    // Send discovered updates to server in batches
+    if (gameSocket && gameSocket.readyState === WebSocket.OPEN && newly.length) {
+        gameSocket.send(JSON.stringify({ type: 'discovered:update', roomId: onlineRoom, playerId: onlinePlayerId, tiles: newly }));
+    }
+}
+
+function handleHarvest(node, idx) {
+    const activeItem = getActiveItem();
+    const hasAxe = activeItem.type === 'axe';
+    const hasPick = activeItem.type === 'pickaxe';
+    const hasShovel = activeItem.type === 'shovel';
+
+    if (node.pickup) {
+        addToInv(node.type, 1);
+        resourceNodes.splice(idx, 1);
+        return;
+    }
+
+    if (node.type === 'wood' || node.type === 'tree') {
+        if (hasAxe) {
+            node.hp--; useToolDurability();
+            if (node.hp <= 0) {
+                addToInv('wood', 5);
+                addToInv('twigs', 2);
+                if (Math.random() < 0.45) addToInv('acorn', 1);
+                node.type = 'stump'; node.icon = '🪵'; node.hp = 3; node.maxHp = 3;
+            }
+        } else if (frameCount % 60 === 0) {
+            displayChat({ name: 'SYSTEM', text: 'Select an Axe (🪓) on the hotbar.', color: '#ffa500' });
+        }
+        return;
+    }
+
+    if (node.type === 'big_rock') {
+        if (hasPick) {
+            node.hp--; useToolDurability();
+            if (node.hp <= 0) {
+                addToInv('stone', 2);
+                addToInv('flint', 1 + (Math.random() < 0.5 ? 1 : 0));
+                resourceNodes.splice(idx, 1);
+            }
+        } else if (frameCount % 60 === 0) {
+            displayChat({ name: 'SYSTEM', text: 'Select a Pickaxe (⛏️) on the hotbar.', color: '#ffa500' });
+        }
+        return;
+    }
+
+    if (node.type === 'flint_node' || node.type === 'rock') {
+        if (hasPick) {
+            node.hp--; useToolDurability();
+            if (node.hp <= 0) {
+                addToInv('flint', 1);
+                resourceNodes.splice(idx, 1);
+            }
+        } else if (frameCount % 60 === 0) {
+            displayChat({ name: 'SYSTEM', text: 'Select a Pickaxe (⛏️) on the hotbar.', color: '#ffa500' });
+        }
+        return;
+    }
+
+    if (node.type === 'stone' || node.type === 'iron') {
+        if (hasPick) {
+            node.hp--; useToolDurability();
+            if (node.hp <= 0) {
+                addToInv(node.type, 5);
+                resourceNodes.splice(idx, 1);
+            }
+        } else if (frameCount % 60 === 0) {
+            displayChat({ name: 'SYSTEM', text: 'Select a Pickaxe (⛏️) on the hotbar.', color: '#ffa500' });
+        }
+        return;
+    }
+
+    if (node.type === 'stump') {
+        if (hasShovel) {
+            node.hp--; useToolDurability();
+            if (node.hp <= 0) {
+                addToInv('wood', 2);
+                resourceNodes.splice(idx, 1);
+            }
+        } else if (frameCount % 60 === 0) {
+            displayChat({ name: 'SYSTEM', text: 'Select a Shovel (🧹) on the hotbar.', color: '#ffa500' });
+        }
+    }
+}
+
+function getBiomeAtWorldPos(x, y) {
+    const tileX = Math.floor((x + 20) / cellSize);
+    const tileY = Math.floor((y + 20) / cellSize);
+    if (tileX < 0 || tileY < 0 || tileX >= COLS || tileY >= ROWS) return 'OCEAN';
+    return worldGrid[tileY]?.[tileX] || 'OCEAN';
+}
+
+function wrapWorldCoordinate(value, limit) {
+    return value < 0 ? limit + value : value >= limit ? value - limit : value;
+}
+
+function isLocationBlocked(x, y) {
+    const tileX = Math.floor((x + 13) / cellSize);
+    const tileY = Math.floor((y + 13) / cellSize);
+    if (tileX < 0 || tileY < 0 || tileX >= COLS || tileY >= ROWS) return true;
+    const biome = worldGrid[tileY]?.[tileX];
+    const waterBlocked = biome && BIOMES[biome] && BIOMES[biome].passable === false && !player.inBoat;
+    const blockedByWall = buildings.some(b => b.type === 'wall' && Math.abs((x + 13) - (b.x + 20)) < 22 && Math.abs((y + 13) - (b.y + 20)) < 22);
+    return waterBlocked || blockedByWall;
+}
+
+function canPlaceStructureAt(x, y, type) {
+    const blockedByWall = buildings.some(b => b.type === 'wall' && Math.abs(b.x - x) < 40 && Math.abs(b.y - y) < 40);
+    const blockedByBuilding = buildings.some(b => b.type !== 'wall' && Math.abs(b.x - x) < 40 && Math.abs(b.y - y) < 40 && b.type !== 'acorn');
+    const blockedByNode = resourceNodes.some(n => Math.abs(n.x - x) < 40 && Math.abs(n.y - y) < 40 && n.type !== 'sapling');
+    const tooCloseToPlayer = Math.abs(player.x - x) < 30 && Math.abs(player.y - y) < 30;
+    const biome = getBiomeAtWorldPos(x, y);
+    const waterTile = BIOMES[biome] && BIOMES[biome].passable === false;
+    const overWaterOnly = type === 'boat';
+    if (type === 'wall') return !(blockedByWall || blockedByBuilding || blockedByNode || tooCloseToPlayer || waterTile);
+    if (overWaterOnly) return !(blockedByBuilding || blockedByNode || tooCloseToPlayer || !waterTile || buildings.some(b => b.type === 'boat' && Math.abs(b.x - x) < 40 && Math.abs(b.y - y) < 40));
+    return !(blockedByBuilding || blockedByNode || tooCloseToPlayer || waterTile);
+}
+
+function tryPlaceStructure() {
+    const target = placementMouse;
+    const type = buildMode;
+    if (!type || type === 'none') return;
+    if (!canPlaceStructureAt(target.x, target.y, type)) {
+        displayChat({ name: 'SYSTEM', text: type === 'boat' ? 'Boats must be placed over deep water.' : 'You cannot place there.', color: '#ffa500' });
+        cancelPlacement();
+        return;
+    }
+
+    if (type === 'acorn') {
+        const slot = player.inventory.find(s => s && s.type === 'acorn');
+        if (!slot || slot.count <= 0) {
+            displayChat({ name: 'SYSTEM', text: 'No acorns left to plant.', color: '#ffa500' });
+            cancelPlacement();
+            return;
+        }
+        if (!worldConfig.creative) {
+            slot.count -= 1;
+            if (slot.count <= 0) slot.type = null;
+        }
+        resourceNodes.push({ x: target.x, y: target.y, type: 'sapling', icon: '🌱', hp: 1, maxHp: 1, plantedDay: dayCount + 1, pickup: false });
+        displayChat({ name: 'SYSTEM', text: 'Acorn planted. It will sprout in 1 day.', color: '#2ecc71' });
+        cancelPlacement();
+        renderInventory();
+        return;
+    }
+
+    const recipe = BUILDINGS[type];
+    if (!worldConfig.creative && !hasRes(recipe)) {
+        displayChat({ name: 'SYSTEM', text: `${recipe.name}: need materials.`, color: '#f00' });
+        return;
+    }
+    if (!worldConfig.creative) payRes(recipe);
+    // Ask server to place the structure (server authoritative)
+    if (gameSocket && gameSocket.readyState === WebSocket.OPEN) {
+        gameSocket.send(JSON.stringify({ type: 'world:action', playerId: onlinePlayerId, action: { type: 'place', payload: { type, x: target.x, y: target.y } } }));
+        setBlueprintFeedback(`${recipe.name} requested.`);
+        displayChat({ name: 'SYSTEM', text: `Requesting placement of ${recipe.name}...`, color: '#888' });
+    } else {
+        // Fallback to local placement for offline/solo
+        const building = { x: target.x, y: target.y, type, hp: recipe.hp || 100, maxHp: recipe.hp || 100, life: recipe.life || Infinity, inventory: type === 'chest' ? Array.from({length:10}, () => ({ type: null, count: 0 })) : undefined };
+        buildings.push(building);
+        setBlueprintFeedback(`${recipe.name} placed (offline).`);
+        displayChat({ name: 'SYSTEM', text: `${recipe.name} placed.`, color: '#2ecc71' });
+    }
+    cancelPlacement();
+}
+
+function handleInput(e) {
+    if(currentState !== 'PLAYING' || player.isDowned) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX-rect.left)/globalScale + camera.x, my = (e.clientY-rect.top)/globalScale + camera.y;
+    placementMouse = { x: Math.floor(mx / 40) * 40, y: Math.floor(my / 40) * 40 };
+
+    const activeItem = getActiveItem();
+    if (!isPlacing && activeItem && activeItem.type === 'acorn') {
+        buildMode = 'acorn';
+        isPlacing = true;
+        document.getElementById('placement-label').innerText = 'PLACING ACORN';
+        document.getElementById('placement-controls').style.display = 'flex';
+        return;
+    }
+
+    if (isPlacing && buildMode !== 'none') {
+        tryPlaceStructure();
+        return;
+    }
+
+    const gx = Math.floor(mx/40), gy = Math.floor(my/40);
+    const bIdx = buildings.findIndex(b => Math.floor(b.x/40) === gx && Math.floor(b.y/40) === gy);
+    const nodeIdx = resourceNodes.findIndex(n => Math.abs(n.x+20-mx)<20 && Math.abs(n.y+20-my)<20);
+
+    if (bIdx !== -1) {
+        const bld = buildings[bIdx];
+        const dist = Math.hypot(player.x - bld.x, player.y - bld.y);
+        if (bld.type === 'boat') {
+            if (dist < 60) {
+                if (gameSocket && gameSocket.readyState === WebSocket.OPEN) {
+                    gameSocket.send(JSON.stringify({ type: 'world:action', playerId: onlinePlayerId, action: { type: 'board', payload: { x: bld.x, y: bld.y } } }));
+                } else {
+                    player.inBoat = true; player.boatId = bld.x + ',' + bld.y; displayChat({ name: 'SYSTEM', text: 'You board the boat.', color: '#2ecc71' });
+                }
+            }
+            return;
+        }
+        if (bld.type === 'chest') {
+            if (dist < 80) { openChest(bld); }
+            else displayChat({ name: 'SYSTEM', text: 'You are too far away to access the chest.', color: '#ffa500' });
+            return;
+        }
+    }
+    
+    if (nodeIdx !== -1 && Math.sqrt((player.x+13-mx)**2+(player.y+13-my)**2)<120) {
+        if (gameSocket && gameSocket.readyState === WebSocket.OPEN) {
+            gameSocket.send(JSON.stringify({ type: 'world:action', playerId: onlinePlayerId, action: { type: 'harvest' } }));
+        } else { handleHarvest(resourceNodes[nodeIdx], nodeIdx); }
+        return;
+    }
+
+    const mobIdx = mobs.findIndex(m => Math.sqrt((m.x+20-mx)**2 + (m.y+20-my)**2) < 40);
+    if (mobIdx !== -1 && Math.sqrt((player.x-mx)**2+(player.y-my)**2) < 120) {
+        const weapon = getActiveItem().type === 'axe' || getActiveItem().type === 'pickaxe';
+        if (weapon) {
+            mobs[mobIdx].hp -= 5;
+            useToolDurability();
+            if (mobs[mobIdx].hp <= 0) {
+                if (mobs[mobIdx].type === 'wolf') addToInv('stone', 2);
+                mobs.splice(mobIdx, 1);
+            }
+            return;
+        }
+    }
+
+    if (bIdx !== -1 && buildMode === 'none' && ['research', 'cooking'].includes(buildings[bIdx].type)) toggleBuildMenu();
+}
+
+function toggleBuildMenu() {
+    if (player.isDowned) return;
+    const overlay = document.getElementById('build-menu-overlay');
+    if(overlay.style.display === 'flex') { closeBuildMenu(); return; }
+    
+    stopMovement();
+    const nearLab = buildings.some(b => b.type === 'research' && Math.sqrt((player.x-b.x)**2+(player.y-b.y)**2) < 180);
+    document.getElementById('science-warning').style.display = nearLab ? 'none' : 'block';
+    renderBlueprints(nearLab);
+    overlay.style.display = 'flex';
+}
+
+function blueprintType(key) {
+    if (['axe', 'pickaxe', 'torch', 'shovel', 'acorn'].includes(key)) return 'TOOLS';
+    if (['campfire', 'wall', 'boat', 'door', 'chest'].includes(key)) return 'STRUCTURES';
+    if (['research', 'extractor', 'cooking'].includes(key)) return 'STATIONS';
+    return 'TOOLS';
+}
+
+function recipeCosts(data) {
+    const costs = [];
+    if (data.twigs) costs.push(`${data.twigs} TWIGS`);
+    if (data.flint) costs.push(`${data.flint} FLINT`);
+    if (data.wood) costs.push(`${data.wood} WOOD`);
+    if (data.stone) costs.push(`${data.stone} STONE`);
+    if (data.iron) costs.push(`${data.iron} IRON`);
+    return costs.join('  •  ') || 'NO COST';
+}
+
+function createRecipeCard(name, icon, type, cost, available, action, note) {
+    const card = document.createElement('div');
+    card.className = `build-card ${available ? '' : 'locked'}`;
+    card.innerHTML = `<span class="recipe-icon">${icon}</span><div><div class="recipe-name">${name}</div><div class="recipe-type">${type}</div></div><div class="recipe-cost">${cost}</div><div class="recipe-action">${note}</div>`;
+    card.onclick = () => { if (available) action(); else setBlueprintFeedback(`${name}: ${note}.`); };
+    document.getElementById('build-grid-content').appendChild(card);
+}
+
+function setBlueprintFeedback(message) {
+    const feedback = document.getElementById('blueprint-feedback');
+    if (feedback) feedback.innerText = message;
+}
+
+function renderBlueprints(nearLab) {
+    const categories = ['ALL', 'TOOLS', 'STRUCTURES', 'STATIONS', 'FOOD'];
+    const tabs = document.getElementById('blueprint-tabs'); tabs.innerHTML = '';
+    categories.forEach(category => {
+        const tab = document.createElement('button'); tab.className = `blueprint-tab ${blueprintCategory === category ? 'active' : ''}`; tab.innerText = category;
+        tab.onclick = () => { blueprintCategory = category; renderBlueprints(nearLab); }; tabs.appendChild(tab);
+    });
+    const grid = document.getElementById('build-grid-content'); grid.innerHTML = '';
+    const recipes = Object.keys(BUILDINGS)
+        .filter(key => key !== 'door' && key !== 'acorn' && (!unlocked.door || key !== 'door'))
+        .map(key => ({ key, data: BUILDINGS[key], type: blueprintType(key) }));
+    recipes.push({ key: 'paste', name: 'PASTE', icon: '🧪', cost: '15 WOOD', type: 'FOOD', available: true, note: 'FOOD +30' });
+    if (blueprintCategory !== 'ALL') recipes.splice(0, recipes.length, ...recipes.filter(recipe => recipe.type === blueprintCategory));
+    document.getElementById('blueprint-summary').innerText = `${recipes.length} RECIPES  •  ${blueprintCategory === 'ALL' ? 'ALL CATEGORIES' : blueprintCategory}`;
+    recipes.forEach(recipe => {
+        if (recipe.key === 'paste') {
+            const canCraftPaste = worldConfig.creative || hasRes({ wood: 15 });
+            const canUseKitchen = worldConfig.creative || buildings.some(b => b.type === 'cooking' && Math.sqrt((player.x - b.x) ** 2 + (player.y - b.y) ** 2) < 180);
+            createRecipeCard(recipe.name, recipe.icon, recipe.type, recipe.cost, canCraftPaste && canUseKitchen, () => { if (canUseKitchen && (worldConfig.creative || hasRes({ wood: 15 }))) { if (!worldConfig.creative) payRes({ wood: 15 }); addToInv('paste', 1); setBlueprintFeedback('PASTE crafted.'); } else setBlueprintFeedback('PASTE: NEED KITCHEN OR MATERIALS.'); }, canUseKitchen ? 'FOOD +30' : 'KITCHEN REQUIRED');
+            return;
+        }
+        const locked = recipe.data.reqLab && !nearLab && !worldConfig.creative;
+        const affordable = worldConfig.creative || hasRes(recipe.data);
+        createRecipeCard(recipe.data.name, recipe.data.icon, recipe.type, recipeCosts(recipe.data), !locked, () => craftOrBuild(recipe.key), locked ? 'LAB REQUIRED' : affordable ? recipe.data.type === 'item' ? 'CRAFT' : 'PLACE' : 'NEED MATERIALS');
+    });
+}
+
+function craftOrBuild(key) {
+    if (key === 'paste') {
+        const nearKitchen = buildings.some(b => b.type === 'cooking' && Math.sqrt((player.x - b.x) ** 2 + (player.y - b.y) ** 2) < 180);
+        if (!worldConfig.creative && !nearKitchen) {
+            setBlueprintFeedback('PASTE: NEED KITCHEN.');
+            displayChat({ name: 'SYSTEM', text: 'Kitchen required to craft paste.', color: '#f00' });
+            return;
+        }
+        if (worldConfig.creative || hasRes({ wood: 15 })) {
+            if (!worldConfig.creative) payRes({ wood: 15 });
+            addToInv('paste', 1);
+            setBlueprintFeedback('PASTE crafted.');
+            closeBuildMenu();
+            return;
+        }
+        setBlueprintFeedback('PASTE: NEED MATERIALS.');
+        displayChat({ name: 'SYSTEM', text: 'Insufficient resources.', color: '#f00' });
+        return;
+    }
+    if (worldConfig.creative || hasRes(BUILDINGS[key])) {
+        if (!worldConfig.creative) payRes(BUILDINGS[key]);
+        if (BUILDINGS[key].type === 'item') addToInv(key, 1);
+        else { buildMode = key; isPlacing = true; document.getElementById('placement-label').innerText = `PLACING ${BUILDINGS[key].name.toUpperCase()}`; document.getElementById('placement-controls').style.display = 'flex'; displayChat({ name: 'SYSTEM', text: `Click to place. Press X to stop.`, color: '#888' }); }
+        setBlueprintFeedback(`${BUILDINGS[key].name} ready.`);
+        closeBuildMenu();
+    } else { setBlueprintFeedback(`${BUILDINGS[key].name}: NEED MATERIALS.`); displayChat({ name: 'SYSTEM', text: `Insufficient resources.`, color: '#f00' }); }
+}
+
+function closeBuildMenu() { document.getElementById('build-menu-overlay').style.display = 'none'; }
+
+// CHEST UI: open a chest building and render drag & drop storage
+let _activeChestBuilding = null;
+function openChest(building) {
+    if (!building || building.type !== 'chest') return;
+    _activeChestBuilding = building;
+    const overlay = document.getElementById('chest-menu-overlay');
+    overlay.style.display = 'flex';
+    renderChestUI();
+}
+
+function closeChest() {
+    const overlay = document.getElementById('chest-menu-overlay');
+    overlay.style.display = 'none';
+    _activeChestBuilding = null;
+}
+
+function renderChestUI() {
+    const chestGrid = document.getElementById('chest-storage-grid');
+    const playerGrid = document.getElementById('player-storage-grid');
+    if (!chestGrid || !playerGrid) return;
+
+    // Clear
+    chestGrid.innerHTML = '';
+    playerGrid.innerHTML = '';
+
+    // Ensure chest inventory exists and has 10 slots
+    if (!_activeChestBuilding.inventory) _activeChestBuilding.inventory = Array.from({length:10}, () => ({ type: null, count: 0 }));
+    _activeChestBuilding.inventory = _activeChestBuilding.inventory.slice(0, 10);
+    while (_activeChestBuilding.inventory.length < 10) _activeChestBuilding.inventory.push({ type: null, count: 0 });
+
+    // Render chest slots
+    _activeChestBuilding.inventory.forEach((slot, idx) => {
+        const el = document.createElement('div');
+        el.className = `storage-slot ${!slot.type ? 'empty' : ''}`;
+        el.draggable = true;
+        el.dataset.kind = 'chest';
+        el.dataset.index = idx;
+        el.innerText = slot.type ? (ITEM_ICONS[slot.type] || slot.type.toUpperCase().slice(0, 1)) : '';
+        if (slot.count > 0) {
+            const c = document.createElement('div'); c.className = 'count'; c.innerText = slot.count; el.appendChild(c);
+        }
+        el.addEventListener('dragstart', handleSlotDragStart);
+        el.addEventListener('dragover', handleSlotDragOver);
+        el.addEventListener('drop', handleSlotDrop);
+        chestGrid.appendChild(el);
+    });
+
+    // Render player slots (show hotbar + rest)
+    player.inventory.forEach((slot, idx) => {
+        const el = document.createElement('div');
+        el.className = `storage-slot ${!slot.type ? 'empty' : ''}`;
+        el.draggable = true;
+        el.dataset.kind = 'player';
+        el.dataset.index = idx;
+        el.innerText = slot.type ? (ITEM_ICONS[slot.type] || slot.type.toUpperCase().slice(0, 1)) : '';
+        if (slot.count > 0) { const c = document.createElement('div'); c.className = 'count'; c.innerText = slot.count; el.appendChild(c); }
+        el.addEventListener('dragstart', handleSlotDragStart);
+        el.addEventListener('dragover', handleSlotDragOver);
+        el.addEventListener('drop', handleSlotDrop);
+        playerGrid.appendChild(el);
+    });
+}
+
+let _dragPayload = null;
+function handleSlotDragStart(e) {
+    const el = e.currentTarget;
+    const kind = el.dataset.kind;
+    const idx = Number(el.dataset.index);
+    _dragPayload = { kind, idx };
+    e.dataTransfer.effectAllowed = 'move';
+}
+function handleSlotDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; e.currentTarget.classList.add('drag-over'); }
+function handleSlotDrop(e) {
+    e.preventDefault();
+    const target = e.currentTarget;
+    target.classList.remove('drag-over');
+    if (!_dragPayload) return;
+    const from = _dragPayload;
+    const toKind = target.dataset.kind;
+    const toIdx = Number(target.dataset.index);
+
+    transferBetweenSlots(from.kind, from.idx, toKind, toIdx);
+    _dragPayload = null;
+    renderChestUI();
+}
+
+function transferBetweenSlots(fromKind, fromIdx, toKind, toIdx) {
+    // Server-authoritative transfer: send a chest_transfer action and wait for server sync
+    if (!gameSocket || gameSocket.readyState !== WebSocket.OPEN) {
+        if (!_activeChestBuilding) return;
+        const from = fromKind === 'player' ? player.inventory : _activeChestBuilding.inventory;
+        const to = toKind === 'player' ? player.inventory : _activeChestBuilding.inventory;
+        if (!from[fromIdx]?.type || !to[toIdx]) return;
+        const source = from[fromIdx], destination = to[toIdx];
+        if (destination.type && destination.type === source.type && !BUILDINGS[source.type]?.durability && !BUILDINGS[source.type]?.duration) {
+            destination.count = (destination.count || 0) + (source.count || 0);
+            from[fromIdx] = { type: null, count: 0 };
+        } else {
+            from[fromIdx] = destination;
+            to[toIdx] = source;
+        }
+        renderInventory();
+        return;
+    }
+    const chestX = _activeChestBuilding?.x, chestY = _activeChestBuilding?.y;
+    gameSocket.send(JSON.stringify({ type: 'world:action', playerId: onlinePlayerId, action: { type: 'chest_transfer', payload: { chestX, chestY, fromKind, fromIdx, toKind, toIdx } } }));
+    // Optimistically close UI until server responds with authoritative update
+    // closeChest(); // optional: keep open while waiting
+}
+
+// Close chest if clicking outside canvas (optional)
+document.addEventListener('keydown', e => { if (e.code === 'Escape' && document.getElementById('chest-menu-overlay')?.style.display === 'flex') closeChest(); });
+
+
+function cancelPlacement() {
+    buildMode = 'none'; isPlacing = false;
+    const controls = document.getElementById('placement-controls');
+    if (controls) controls.style.display = 'none';
+}
+
+function updatePlacementMouse(e) {
+    const rect = canvas.getBoundingClientRect();
+    placementMouse = { x: Math.floor(((e.clientX - rect.left) / globalScale + camera.x) / 40) * 40, y: Math.floor(((e.clientY - rect.top) / globalScale + camera.y) / 40) * 40 };
+}
+
+function update() {
+    if(currentState === 'MENU') return;
+    if (document.hidden) {
+        stopMovement();
+        if (gameSocket && gameSocket.readyState === WebSocket.OPEN) {
+            gameSocket.send(JSON.stringify({ type: 'input:update', roomId: onlineRoom, playerId: onlinePlayerId, sequence: ++inputSequence, input: { keys: {} } }));
+        }
+        return;
+    }
+    if (currentState === 'PAUSED' || isAnyOverlayActive()) return;
+    frameCount++; updateDiscovery();
+    if (!gameSocket || gameSocket.readyState !== WebSocket.OPEN) {
+        let dx = 0, dy = 0;
+        if (keys['KeyW'] || keys['ArrowUp']) dy -= 1;
+        if (keys['KeyS'] || keys['ArrowDown']) dy += 1;
+        if (keys['KeyA'] || keys['ArrowLeft']) dx -= 1;
+        if (keys['KeyD'] || keys['ArrowRight']) dx += 1;
+        if (dx || dy) {
+            const magnitude = Math.hypot(dx, dy);
+            const speed = PLAYER_SPEED * (['LAKE', 'RIVER', 'SHALLOW_WATER'].includes(getBiomeAtWorldPos(player.x, player.y)) ? 0.5 : 1);
+            const rawX = player.x + (dx / magnitude) * speed;
+            const rawY = player.y + (dy / magnitude) * speed;
+            const nextX = wrapWorldCoordinate(rawX, worldWidth);
+            const nextY = wrapWorldCoordinate(rawY, worldHeight);
+            if (nextX !== rawX || !isLocationBlocked(nextX, player.y)) player.x = nextX;
+            if (nextY !== rawY || !isLocationBlocked(player.x, nextY)) player.y = nextY;
+        }
+    }
+    if (worldConfig.creative) {
+        player.hp = 100;
+        player.hunger = 100;
+        darknessExposure = 0;
+    }
+    Object.values(remotePlayers).forEach(other => { other.renderX += (other.targetX - other.renderX) * 0.25; other.renderY += (other.targetY - other.renderY) * 0.25; });
+    phaseTimeLeft--;
+    if(phaseTimeLeft <= 0) {
+        if(currentPhase === 'DAY') currentPhase = 'DUSK';
+        else if(currentPhase === 'DUSK') currentPhase = 'NIGHT';
+        else { currentPhase = 'DAY'; dayCount++; wolfWaveSpawned = false; resourceNodes.forEach(node => { if (node.type === 'sapling' && dayCount >= node.plantedDay) { node.type = 'wood'; node.icon = '🌲'; node.hp = 5; node.maxHp = 5; } }); }
+        phaseTimeLeft = CYCLE[currentPhase].length * (currentPhase === 'DAY' ? worldConfig.dayMult : worldConfig.nightMult);
+    }
+
+    if (currentPhase === 'NIGHT' && dayCount >= 3 && !wolfWaveSpawned) {
+        const count = Math.floor(dayCount / 2 * worldConfig.wildlifeMult);
+        for(let i=0; i<count; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            mobs.push({ type: 'wolf', x: player.x + Math.cos(angle) * 900, y: player.y + Math.sin(angle) * 900, emoji: '🐺', hp: 15 + (dayCount * 3), maxHp: 15 + (dayCount * 3), speed: 2.2 + (dayCount * 0.1), damage: 4 + Math.floor(dayCount / 4) });
+        }
+        wolfWaveSpawned = true;
+        displayChat({ name: 'SYSTEM', text: 'Howling echoes through the sector...', color: '#ff4444' });
+    }
+    
+    if (getActiveItem().type === 'torch') {
+        if (!worldConfig.creative) getActiveItem().duration--;
+        if (getActiveItem().duration <= 0 && !worldConfig.creative) { getActiveItem().type = null; getActiveItem().count = 0; getActiveItem().duration = 0; getActiveItem().maxDuration = 0; displayChat({ name: 'SYSTEM', text: `Your torch burnt out!`, color: '#f00' }); }
+        if (frameCount % 30 === 0) renderInventory();
+    }
+
+    if(keys['Space'] && !player.isDowned && frameCount % 8 === 0) {
+        let closest = null, minDist = 100;
+        resourceNodes.forEach((n, idx) => { let d = Math.sqrt((n.x+20-(player.x+13))**2 + (n.y+20-(player.y+13))**2); if (d < minDist) { minDist = d; closest = {n, idx}; } });
+        if (closest) handleHarvest(closest.n, closest.idx);
+    }
+
+    mobs.forEach((m, idx) => {
+        if (m.type === 'wolf') {
+            let dx = player.x - m.x, dy = player.y - m.y, dist = Math.sqrt(dx*dx+dy*dy);
+            const nearFire = buildings.some(b => b.type === 'campfire' && Math.sqrt((m.x-b.x)**2+(m.y-b.y)**2) < 200);
+            if (nearFire) { m.x -= (dx/dist) * m.speed; m.y -= (dy/dist) * m.speed; } else if (dist > 10) { m.x += (dx/dist) * m.speed; m.y += (dy/dist) * m.speed; }
+            if (dist < 40 && frameCount % 40 === 0) damagePlayer(m.damage);
+        } else {
+            if (Math.random() < 0.01) { m.tx = m.x + (Math.random()-0.5)*150; m.ty = m.y + (Math.random()-0.5)*150; }
+            let dx = (m.tx || m.x) - m.x, dy = (m.ty || m.y) - m.y, dist = Math.sqrt(dx*dx+dy*dy);
+            if (dist > 1) { m.x += (dx/dist)*0.5; m.y += (dy/dist)*0.5; }
+        }
+    });
+
+    // In multiplayer, movement/harvest/interaction is server-authoritative.
+    if(!player.isDowned) {
+        // Space: request harvest (server will validate proximity and tools)
+        if (keys['Space'] && frameCount % 8 === 0 && gameSocket && gameSocket.readyState === WebSocket.OPEN) {
+            gameSocket.send(JSON.stringify({ type: 'world:action', playerId: onlinePlayerId, action: { type: 'harvest' } }));
+        }
+        // Disembark handled by server; client can request disembark
+        if (keys['Space'] && player.inBoat && frameCount % 12 === 0 && gameSocket && gameSocket.readyState === WebSocket.OPEN) {
+            gameSocket.send(JSON.stringify({ type: 'world:action', playerId: onlinePlayerId, action: { type: 'disembark' } }));
+        }
+        // Hunger and creative still handled client-side for solo; in multiplayer server will send hunger/hp updates
+    }
+
+    if(player.hp <= 0 && !gameSocket) { resetGame(); }
+    
+    if(!worldConfig.creative && currentPhase === 'NIGHT') {
+        const campfire = buildings.some(b => b.type === 'campfire' && Math.sqrt((player.x-b.x-20)**2+(player.y-b.y-20)**2) < 250);
+        const torch = getActiveItem().type === 'torch';
+        if (!campfire && !torch) darknessExposure++;
+    }
+
+    const hungerBox = document.getElementById('hunger-box');
+    const hungerLabel = document.getElementById('hunger-label');
+    const survivalAlert = document.getElementById('survival-alert');
+    const nextHungerAlert = player.hunger <= 0 ? 3 : player.hunger <= 20 ? 2 : player.hunger <= 50 ? 1 : 0;
+    if (nextHungerAlert !== hungerAlertLevel) {
+        hungerAlertLevel = nextHungerAlert;
+        if (hungerAlertLevel === 3) displayChat({ name: 'SYSTEM', text: 'STARVING: health is draining.', color: '#ff4444' });
+        else if (hungerAlertLevel === 2) displayChat({ name: 'SYSTEM', text: 'CRITICAL HUNGER: eat something.', color: '#ff4444' });
+        else if (hungerAlertLevel === 1) displayChat({ name: 'SYSTEM', text: 'Hunger is getting low.', color: '#ffa500' });
+    }
+    hungerBox.classList.toggle('warning', hungerAlertLevel === 1);
+    hungerBox.classList.toggle('critical', hungerAlertLevel >= 2);
+    hungerLabel.innerText = hungerAlertLevel >= 2 ? 'STARVING' : hungerAlertLevel === 1 ? 'HUNGER LOW' : 'HUNGER';
+    survivalAlert.style.display = hungerAlertLevel >= 2 ? 'block' : 'none';
+    survivalAlert.innerText = hungerAlertLevel === 3 ? 'Health draining' : hungerAlertLevel === 2 ? 'Find food now' : '';
+
+    if (darknessExposure >= 8 * 60) damagePlayer(7 / 60);
+    if (darknessExposure >= 8 * 60 && frameCount % 60 === 0) displayChat({ name: 'SYSTEM', text: 'The darkness is hurting you.', color: '#ff4444' });
+    if (gameSocket && gameSocket.readyState === WebSocket.OPEN && frameCount % 3 === 0) gameSocket.send(JSON.stringify({ type: 'input:update', roomId: onlineRoom, playerId: onlinePlayerId, sequence: ++inputSequence, input: { keys: { ...keys } } }));
+    document.getElementById('darkness-warning').style.display = 'none';
+
+    camera.x = Math.max(0, Math.min(worldWidth - logicalWidth, player.x - logicalWidth/2));
+    camera.y = Math.max(0, Math.min(worldHeight - logicalHeight, player.y - logicalHeight/2));
+    buildings = buildings.filter(b => b.type !== 'campfire' || --b.life > 0);
+    document.getElementById('hp-val').innerText = Math.ceil(player.hp);
+    document.getElementById('hunger-val').innerText = Math.ceil(player.hunger);
+    document.getElementById('day-count').innerText = `DAY ${dayCount}`;
+    document.getElementById('phase-label').innerText = CYCLE[currentPhase].label;
+    const sec = Math.ceil(phaseTimeLeft/60);
+    document.getElementById('phase-timer').innerText = `${Math.floor(sec/60).toString().padStart(2,'0')}:${(sec%60).toString().padStart(2,'0')}`;
+
+}
+
+function drawLightOnCtx(targetCtx, x, y, r) { 
+    const grad = targetCtx.createRadialGradient(x, y, 0, x, y, r); 
+    grad.addColorStop(0, 'rgba(255,255,255,1)'); 
+    grad.addColorStop(0.7, 'rgba(255,255,255,0.4)'); 
+    grad.addColorStop(1, 'rgba(255,255,255,0)'); 
+    targetCtx.fillStyle = grad; targetCtx.beginPath(); targetCtx.arc(x, y, r, 0, Math.PI * 2); targetCtx.fill(); 
+}
+
+function toggleWorldMap() {
+    if (currentState === 'MENU') return;
+    isMapOpen = !isMapOpen;
+    const overlay = document.getElementById('world-map-overlay');
+    overlay.style.display = isMapOpen ? 'flex' : 'none';
+    if (isMapOpen) { stopMovement(); drawWorldMap(); }
+}
+
+function changeMapZoom(amount) {
+    setMapZoom(mapZoom + amount, COLS / 2, ROWS / 2);
+}
+
+function resetMapZoom() {
+    mapZoom = 1;
+    mapPan = { x: 0, y: 0 };
+    document.getElementById('world-map-zoom-label').innerText = '100%';
+    drawWorldMap();
+}
+
+function clampMapPan() {
+    const scale = Math.min(worldMapCanvas.width / COLS, worldMapCanvas.height / ROWS);
+    const maxPan = Math.max(0, (COLS * scale * mapZoom - worldMapCanvas.width) * 0.5);
+    mapPan.x = Math.max(-maxPan, Math.min(maxPan, mapPan.x));
+    mapPan.y = Math.max(-maxPan, Math.min(maxPan, mapPan.y));
+}
+
+function setMapZoom(nextZoom, focusX, focusY) {
+    const oldZoom = mapZoom;
+    mapZoom = Math.max(0.5, Math.min(3, nextZoom));
+    const scale = Math.min(worldMapCanvas.width / COLS, worldMapCanvas.height / ROWS);
+    const oldWorldWidth = COLS * scale * oldZoom;
+    const newWorldWidth = COLS * scale * mapZoom;
+    const focusNormX = (focusX / COLS) * oldWorldWidth - oldWorldWidth / 2;
+    const focusNormY = (focusY / ROWS) * oldWorldWidth - oldWorldWidth / 2;
+    mapPan.x = (mapPan.x + focusNormX) * (newWorldWidth / oldWorldWidth) - focusNormX;
+    mapPan.y = (mapPan.y + focusNormY) * (newWorldWidth / oldWorldWidth) - focusNormY;
+    clampMapPan();
+    document.getElementById('world-map-zoom-label').innerText = `${Math.round(mapZoom * 100)}%`;
+    drawWorldMap();
+}
+
+function mapCanvasPoint(event) {
+    const rect = worldMapCanvas.getBoundingClientRect();
+    return { x: (event.clientX - rect.left) * COLS / rect.width, y: (event.clientY - rect.top) * ROWS / rect.height };
+}
+
+function startMapDrag(event) {
+    mapDrag = { x: event.clientX, y: event.clientY, panX: mapPan.x, panY: mapPan.y };
+    worldMapCanvas.classList.add('dragging');
+    worldMapCanvas.setPointerCapture(event.pointerId);
+}
+
+function dragMap(event) {
+    if (!mapDrag) return;
+    const rect = worldMapCanvas.getBoundingClientRect();
+    mapPan.x = mapDrag.panX + (event.clientX - mapDrag.x) * COLS / rect.width;
+    mapPan.y = mapDrag.panY + (event.clientY - mapDrag.y) * ROWS / rect.height;
+    clampMapPan();
+    drawWorldMap();
+}
+
+function stopMapDrag(event) {
+    if (mapDrag && event && worldMapCanvas.hasPointerCapture(event.pointerId)) worldMapCanvas.releasePointerCapture(event.pointerId);
+    mapDrag = null;
+    worldMapCanvas.classList.remove('dragging');
+}
+
+function zoomMapAtCursor(event) {
+    event.preventDefault();
+    const point = mapCanvasPoint(event);
+    setMapZoom(mapZoom + (event.deltaY < 0 ? 0.2 : -0.2), point.x, point.y);
+}
+
+let _mapRebuildIndex = 0; let _mapRebuildChunk = 20000;
+function drawWorldMap() {
+    if (mapTerrainDirty) {
+        const terrainCtx = mapTerrainCanvas.getContext('2d', { willReadFrequently: true });
+        // For very large maps, rebuild in chunks to avoid frame stalls
+        const total = COLS * ROWS;
+        if (total > 150000) {
+            const image = terrainCtx.getImageData(0,0,COLS,ROWS);
+            const start = _mapRebuildIndex;
+            const end = Math.min(total, start + _mapRebuildChunk);
+            for (let i = start; i < end; i++) {
+                const y = Math.floor(i / COLS), x = i % COLS;
+                if (!worldConfig.creative && !discoveredGrid[y * COLS + x]) { image.data[i*4+3] = 0; continue; }
+                const color = BIOMES[worldGrid[y][x]].color;
+                image.data[i*4] = parseInt(color.slice(1, 3), 16);
+                image.data[i*4+1] = parseInt(color.slice(3, 5), 16);
+                image.data[i*4+2] = parseInt(color.slice(5, 7), 16);
+                image.data[i*4+3] = 255;
+            }
+            terrainCtx.putImageData(image, 0, 0);
+            _mapRebuildIndex = end;
+            if (_mapRebuildIndex >= total) { mapTerrainDirty = false; _mapRebuildIndex = 0; }
+        } else {
+            const image = terrainCtx.createImageData(COLS, ROWS);
+            for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+                if (!worldConfig.creative && !discoveredGrid[y * COLS + x]) continue;
+                const color = BIOMES[worldGrid[y][x]].color;
+                const index = (y * COLS + x) * 4;
+                image.data[index] = parseInt(color.slice(1, 3), 16); image.data[index + 1] = parseInt(color.slice(3, 5), 16); image.data[index + 2] = parseInt(color.slice(5, 7), 16); image.data[index + 3] = 255;
+            }
+            terrainCtx.putImageData(image, 0, 0);
+            mapTerrainDirty = false;
+        }
+    }
+    const mapW = worldMapCanvas.width;
+    const mapH = worldMapCanvas.height;
+    const fitScale = Math.min(mapW / COLS, mapH / ROWS);
+    const renderScale = fitScale * mapZoom;
+    const drawW = COLS * renderScale;
+    const drawH = ROWS * renderScale;
+    const offsetX = (mapW - drawW) * 0.5 + mapPan.x;
+    const offsetY = (mapH - drawH) * 0.5 + mapPan.y;
+    worldMapCtx.clearRect(0, 0, mapW, mapH);
+    worldMapCtx.imageSmoothingEnabled = false;
+    worldMapCtx.save();
+    worldMapCtx.translate(offsetX, offsetY);
+    worldMapCtx.scale(renderScale, renderScale);
+    worldMapCtx.drawImage(mapTerrainCanvas, 0, 0, COLS, ROWS);
+    resourceNodes.forEach(node => {
+        const x = Math.floor(node.x / cellSize), y = Math.floor(node.y / cellSize);
+        if (worldConfig.creative || discoveredGrid[y * COLS + x]) { worldMapCtx.fillStyle = node.pickup ? '#ffcc00' : '#ffffff'; worldMapCtx.fillRect(x, y, 2, 2); }
+    });
+    buildings.forEach(building => { worldMapCtx.fillStyle = '#ff4444'; worldMapCtx.fillRect(Math.floor(building.x / cellSize), Math.floor(building.y / cellSize), 3, 3); });
+    worldMapCtx.fillStyle = '#00f2ff'; worldMapCtx.fillRect(Math.floor(player.x / cellSize) - 3, Math.floor(player.y / cellSize) - 3, 7, 7);
+    worldMapCtx.restore();
+}
+
+function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    if(currentState === 'MENU') return;
+    ctx.save(); ctx.scale(globalScale, globalScale); 
+    const camX = Math.floor(camera.x), camY = Math.floor(camera.y);
+    ctx.translate(-camX, -camY);
+    const sX = Math.floor(camX/40), eX = Math.min(COLS, Math.floor((camX+logicalWidth)/40)+1), sY = Math.floor(camY/40), eY = Math.min(ROWS, Math.floor((camY+logicalHeight)/40)+1);
+    for(let y=sY; y<eY; y++) for(let x=sX; x<eX; x++) { ctx.fillStyle = BIOMES[worldGrid[y][x]].color; ctx.fillRect(x*40, y*40, 40, 40); }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    resourceNodes.forEach(n => { if (n.x > camX - 50 && n.x < camX + logicalWidth + 50 && n.y > camY - 50 && n.y < camY + logicalHeight + 50) { ctx.font = `${n.pickup ? 16 : 48}px serif`; ctx.fillText(n.icon, n.x+20, n.y+20); if (!n.pickup && n.hp < n.maxHp) { ctx.fillStyle = '#111'; ctx.fillRect(n.x + 5, n.y + 30, 30, 4); ctx.fillStyle = n.type === 'wood' ? '#a67c52' : (n.type === 'stump' ? '#8b4513' : '#888'); ctx.fillRect(n.x + 5, n.y + 30, 30 * (n.hp / n.maxHp), 4); } } });
+    buildings.forEach(b => { ctx.font = '32px serif'; ctx.fillText(BUILDINGS[b.type].icon, b.x+20, b.y+20); });
+    Object.values(remotePlayers).forEach(other => { ctx.font = '40px serif'; ctx.fillText(other.emoji || '🙂', other.renderX + 20, other.renderY + 20); if (other.name) { ctx.font = 'bold 12px Segoe UI'; ctx.fillStyle = other.color || '#fff'; ctx.fillText(other.name, other.renderX + 20, other.renderY - 10); } });
+    if (isPlacing && buildMode !== 'none') {
+        ctx.save(); ctx.globalAlpha = 0.45; ctx.font = '32px serif'; ctx.fillText(BUILDINGS[buildMode].icon, placementMouse.x + 20, placementMouse.y + 20); ctx.restore();
+    }
+    ctx.font = '40px serif'; ctx.textAlign = 'center'; ctx.fillText(player.emoji, player.x+20, player.y+20);
+    if (pendingMode === 'online') { ctx.font = 'bold 12px Segoe UI'; ctx.fillStyle = player.color; ctx.fillText(player.name, player.x+20, player.y-10); }
+    ctx.restore();
+
+    if (currentPhase !== 'DAY') {
+        lightCanvas.width = canvas.width; lightCanvas.height = canvas.height; lctx.clearRect(0,0,lightCanvas.width,lightCanvas.height);
+        lctx.fillStyle = `rgba(0,0,5, ${CYCLE[currentPhase].color})`; lctx.fillRect(0, 0, canvas.width, canvas.height);
+        lctx.globalCompositeOperation = 'destination-out';
+        if (getActiveItem().type === 'torch') drawLightOnCtx(lctx, (player.x - camX + 13) * globalScale, (player.y - camY + 13) * globalScale, 150 * globalScale);
+        buildings.forEach(b => { if(b.type === 'campfire') drawLightOnCtx(lctx, (b.x - camX + 20) * globalScale, (b.y - camY + 20) * globalScale, 250 * globalScale); });
+        lctx.globalCompositeOperation = 'source-over'; ctx.drawImage(lightCanvas, 0, 0);
+    }
+    const vD = 60, px = Math.floor(player.x/40), py = Math.floor(player.y/40), mX = miniCanvas.width/(vD*2), mY = miniCanvas.height/(vD*2);
+    if (frameCount % 6 === 0) {
+        miniCtx.fillStyle = '#000'; miniCtx.fillRect(0,0,miniCanvas.width,miniCanvas.height);
+        for(let y=py-vD; y<py+vD; y++) for(let x=px-vD; x<px+vD; x++) if(x>=0&&x<COLS&&y>=0&&y<ROWS&&discoveredGrid[y*COLS+x]) { miniCtx.fillStyle = BIOMES[worldGrid[y][x]].color; miniCtx.fillRect((x-(px-vD))*mX, (y-(py-vD))*mY, mX+1, mY+1); }
+    }
+    miniCtx.fillStyle = player.color; miniCtx.fillRect(miniCanvas.width/2-3, miniCanvas.height/2-3, 6, 6);
+}
+
+function setupMobile() { const j = document.getElementById('mobile-controls'), js = document.getElementById('joystick'); if(!j || !js) return; let active = false; j.addEventListener('touchstart', e => { e.preventDefault(); active = true; }); window.addEventListener('touchend', () => { active = false; js.style.transform = `translate(0,0)`; }); window.addEventListener('touchmove', e => { if(!active) return; const t = e.touches[0], r = j.getBoundingClientRect(), cx = r.left + r.width/2, cy = r.top + r.height/2; let dx = t.clientX-cx, dy = t.clientY-cy, d = Math.sqrt(dx*dx+dy*dy); if(d>40) { dx*=40/d; dy*=40/d; } js.style.transform = `translate(${dx}px, ${dy}px)`; player.x = wrapWorldCoordinate(player.x + (dx/40)*PLAYER_SPEED, worldWidth); player.y = wrapWorldCoordinate(player.y + (dy/40)*PLAYER_SPEED, worldHeight); }, {passive: false}); }
+function pauseGame() {
+    if (pendingMode === 'online' || pendingMode === 'online-create') {
+        stopMovement();
+        displayChat({ name: 'SYSTEM', text: 'Pause is disabled while online.', color: '#888' });
+        return;
+    }
+    stopMovement();
+    currentState = 'PAUSED';
+    document.getElementById('pause-screen').style.display = 'flex';
+}
+function resumeGame() { currentState = 'PLAYING'; document.getElementById('pause-screen').style.display = 'none'; }
+function displayChat(msg) { const display = document.getElementById('chat-display'); if(!display) return; const div = document.createElement('div'); div.className = 'chat-msg'; const namePart = (msg.name && msg.name !== 'SYSTEM') ? `<span style="color:${msg.color}">${msg.name}:</span> ` : ''; div.innerHTML = `${namePart}${msg.text}`; display.appendChild(div); if (display.childNodes.length > 8) display.removeChild(display.firstChild); display.scrollTop = display.scrollHeight; setTimeout(() => { if (div.parentNode) { div.style.opacity = '0'; div.style.transform = 'translateY(-2px)'; setTimeout(() => div.remove(), 500); } }, 4000); }
+
+function sendChatMessage() {
+    const input = document.getElementById('chat-input');
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) return;
+    if (gameSocket && gameSocket.readyState === WebSocket.OPEN) {
+        gameSocket.send(JSON.stringify({ type: 'chat:send', roomId: onlineRoom, playerId: onlinePlayerId, text }));
+        displayChat({ name: onlineName || 'YOU', text, color: player.color || '#fff' });
+    }
+    input.value = '';
+}
+
+function handleChatMessage(message) {
+    if (!message || !message.text) return;
+    displayChat({ name: message.name || 'PLAYER', text: message.text, color: message.color || '#fff' });
+}
+function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
+window.onload = init;
+</script>
+</body>
+</html>

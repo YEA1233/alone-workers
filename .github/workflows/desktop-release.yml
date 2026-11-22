@@ -1,0 +1,26 @@
+name: Desktop release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node -e "if (process.env.RELEASE_TAG !== 'v' + require('./package.json').version) throw new Error('Tag must match package.json version')"
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+      - run: npm run desktop:publish -- --win --linux
+        env:
+          GH_TOKEN: ${{ github.token }}

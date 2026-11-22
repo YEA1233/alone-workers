@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ZOMBZ Survival - Uncompromising</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --ui-bg: rgba(10, 10, 10, 0.96);
+            --accent: #ff0000;
+            --energy: #00f2ff;
+            --text: #eeeeee;
+            --gold: #ffcc00;
+            --success: #2ecc71;
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw; height: 100vh;
+            background: #000;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        canvas { display: block; background-color: #0a0a0a; }
+
+        .overlay { position: absolute; color: var(--text); user-select: none; }
+        
+        /* UI Screens */
+        .screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.92);
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 1000;
+            text-align: center;
+        }
+
+        h1 { font-size: 5rem; color: var(--accent); margin: 0; text-shadow: 0 0 20px #f00; letter-spacing: 15px; font-weight: 900; }
+        .menu-btn {
+            background: #111; border: 1px solid #444;
+            color: white; padding: 12px 30px; margin: 10px;
+            font-size: 1rem; cursor: pointer; border-radius: 4px;
+            transition: all 0.2s; min-width: 220px;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .menu-btn:hover { border-color: var(--accent); color: var(--accent); background: #1a0000; }
+        .menu-btn.primary { background: #300; border-color: var(--accent); color: var(--accent); }
+
+        /* HUD */
+        #hud { top: 20px; left: 20px; display: flex; flex-direction: column; gap: 5px; pointer-events: none; }
+        .stat-box {
+            background: var(--ui-bg); padding: 12px 20px;
+            border: 1px solid #222; font-weight: bold; font-size: 0.9rem;
+            display: flex; justify-content: space-between; min-width: 180px;
+        }
+        .hp-border { border-left: 5px solid var(--accent); }
+        .nrgy-border { border-left: 5px solid var(--energy); }
+        .scrap-border { border-left: 5px solid var(--gold); }
+
+        #top-controls { top: 20px; right: 20px; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+        .toggle-btn {
+            background: #111; border: 1px solid #444; color: #888;
+            padding: 5px 12px; cursor: pointer; border-radius: 4px; font-size: 0.75rem;
+        }
+
+        #minimap-container {
+            width: 210px; height: 140px; background: #000;
+            border: 1px solid #333; display: block;
+        }
+
+        /* Build Menu */
+        #build-menu-container { bottom: 20px; left: 50%; transform: translateX(-50%); }
+        #build-menu {
+            display: flex; gap: 10px; background: var(--ui-bg);
+            padding: 10px; border: 1px solid #222; border-radius: 8px;
+        }
+
+        .build-item {
+            display: none; flex-direction: column; align-items: center;
+            background: #151515; border: 2px solid transparent;
+            padding: 10px; cursor: pointer; width: 85px; border-radius: 6px;
+        }
+        .build-item.visible { display: flex; }
+        .build-item.active { border-color: var(--energy); background: #001a1a; }
+        .build-item .icon { font-size: 1.5rem; }
+        .build-item .label { font-size: 0.65rem; margin-top: 4px; text-transform: uppercase; font-weight: bold; }
+        .build-item .cost { font-size: 0.75rem; color: #777; margin-top: 2px; }
+
+        /* Research Console */
+        #research-console {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 450px; background: var(--ui-bg); border: 2px solid var(--gold);
+            padding: 30px; display: none; flex-direction: column; z-index: 900;
+            box-shadow: 0 0 50px rgba(255, 204, 0, 0.2);
+        }
+        #research-console h2 { color: var(--gold); margin-top: 0; letter-spacing: 3px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .research-option {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px; background: #111; margin-top: 10px; border-radius: 4px;
+            border-left: 3px solid var(--gold);
+        }
+        .research-info { text-align: left; }
+        .research-title { font-weight: bold; font-size: 0.9rem; }
+        .research-cost { font-size: 0.8rem; color: #888; }
+        .research-btn-small {
+            background: var(--gold); color: black; border: none; padding: 6px 12px;
+            cursor: pointer; font-weight: bold; font-size: 0.8rem; border-radius: 2px;
+        }
+        .research-btn-small:disabled { background: #444; cursor: not-allowed; }
+
+        #blood-moon-warning {
+            position: absolute; top: 25%; width: 100%; text-align: center;
+            color: var(--accent); font-size: 4rem; font-weight: 900;
+            text-shadow: 0 0 30px #f00; pointer-events: none; display: none;
+            z-index: 500; letter-spacing: 5px;
+        }
+
+        #mobile-controls {
+            position: absolute; bottom: 50px; right: 50px;
+            width: 140px; height: 140px; background: rgba(255,255,255,0.05);
+            border-radius: 50%; display: none;
+        }
+        #joystick {
+            position: absolute; width: 60px; height: 60px;
+            background: rgba(255,255,255,0.15); border-radius: 50%;
+            top: 40px; left: 40px; border: 2px solid rgba(255,255,255,0.1);
+        }
+        
+        .interaction-prompt {
+            position: absolute; bottom: 150px; width: 100%; text-align: center;
+            color: var(--gold); font-weight: bold; font-size: 1.2rem; pointer-events: none;
+            text-shadow: 0 0 10px black; display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+    <div id="blood-moon-warning">BLOOD MOON ASCENDING</div>
+    <div id="interaction-prompt" class="interaction-prompt">LAB ACCESS GRANTED - STAND STILL</div>
+
+    <!-- UI Screens -->
+    <div id="main-menu" class="screen">
+        <h1>ZOMBZ</h1>
+        <p style="color:#888; letter-spacing: 5px; font-size: 0.8rem; margin-bottom: 40px;">UNCOMPROMISING EVOLUTION</p>
+        <div style="display: flex; gap: 10px;">
+            <button class="menu-btn primary" onclick="showDifficulty()">INITIALIZE</button>
+            <button class="menu-btn" onclick="showTutorial()">DATA LOGS</button>
+        </div>
+    </div>
+
+    <div id="difficulty-screen" class="screen" style="display:none;">
+        <h2 style="color:var(--accent); letter-spacing: 2px;">SELECT LETHALITY</h2>
+        <button class="menu-btn" onclick="startGame('easy')">STABLE (0.8x Damage)</button>
+        <button class="menu-btn" onclick="startGame('medium')">VOLATILE (1.0x Damage)</button>
+        <button class="menu-btn" onclick="startGame('hard')">UNCOMPROMISING (1.3x Damage)</button>
+    </div>
+
+    <div id="tutorial-screen" class="screen" style="display:none;">
+        <div style="max-width: 600px; text-align: left; border: 1px solid #333; padding: 40px; background: #050505;">
+            <h2 style="color:var(--energy); border-bottom: 1px solid #222; padding-bottom: 10px;">TACTICAL BRIEFING</h2>
+            <p>• <b>Energy (⚡):</b> Drains over time. Synthesize Rations at a Lab to survive.</p>
+            <p>• <b>Research Console:</b> To unlock tech, stand directly on a 🔬 Research Lab tile.</p>
+            <p>• <b>Upgrades (🔼):</b> Every building can be leveled up. Use the Upgrade tool to increase HP and performance.</p>
+            <p>• <b>Blood Moon:</b> Wave 5, 10, 15... ZOMBZ move faster and deal double damage.</p>
+            <p>• <b>Starting Gear:</b> You begin with 100 Scrap and the 🔫 Turret recipe unlocked.</p>
+        </div>
+        <button class="menu-btn" onclick="hideTutorial()">CONFIRM</button>
+    </div>
+
+    <div id="pause-screen" class="screen" style="display:none;">
+        <h2>SUSPENDED</h2>
+        <button class="menu-btn primary" onclick="resumeGame()">RESUME</button>
+        <button class="menu-btn" onclick="resetGame()">ABANDON MISSION</button>
+    </div>
+
+    <div id="game-over" class="screen" style="display:none;">
+        <h1 style="font-size: 3rem;">CORE FAILURE</h1>
+        <p>You survived <span id="final-wave">0</span> waves before expiration.</p>
+        <button class="menu-btn primary" onclick="resetGame()">REINITIALIZE</button>
+    </div>
+
+    <!-- Research Console Pop-up -->
+    <div id="research-console" class="overlay">
+        <h2>LAB TERMINAL <span id="lab-lvl-display" style="float:right; font-size: 0.8rem; margin-top: 10px;">LVL 1</span></h2>
+        <div id="research-list">
+            <!-- Dynamic Content -->
+        </div>
+        <button class="menu-btn" style="margin-top: 20px; width: 100%; border-color: #333;" onclick="closeResearch()">CLOSE TERMINAL</button>
+    </div>
+
+    <!-- Gameplay HUD -->
+    <div id="hud" class="overlay">
+        <div class="stat-box hp-border"><span>HP</span><span id="hp-val">100</span></div>
+        <div class="stat-box nrgy-border"><span>ENERGY</span><span id="energy-val">100</span></div>
+        <div class="stat-box scrap-border"><span>SCRAP</span><span id="scrap-val">100</span></div>
+        <div class="stat-box" style="border-left:5px solid #fff"><span>STATUS</span><span id="wave-val">Wave 1</span></div>
+    </div>
+
+    <div id="top-controls" class="overlay">
+        <div id="minimap-container"><canvas id="minimap-canvas"></canvas></div>
+        <button class="toggle-btn" onclick="pauseGame()">PAUSE [P]</button>
+    </div>
+
+    <div id="build-menu-container" class="overlay">
+        <div id="build-menu">
+            <div class="build-item visible active" id="item-wall" onclick="setMode('wall')">
+                <span class="icon">🧱</span><span class="label">Wall</span><span class="cost">12</span>
+            </div>
+            <div class="build-item visible" id="item-research" onclick="setMode('research')">
+                <span class="icon">🔬</span><span class="label">Lab</span><span class="cost">80</span>
+            </div>
+            <div class="build-item visible" id="item-turret" onclick="setMode('turret')">
+                <span class="icon">🔫</span><span class="label">Turret</span><span class="cost">45</span>
+            </div>
+            <div class="build-item" id="item-repair" onclick="setMode('repair')">
+                <span class="icon">🛠️</span><span class="label">Repair</span><span class="cost">8</span>
+            </div>
+            <div class="build-item visible" id="item-upgrade" onclick="setMode('upgrade')">
+                <span class="icon">🔼</span><span class="label">Upgrade</span><span class="cost">VARIES</span>
+            </div>
+            <div class="build-item visible" id="item-recycle" onclick="setMode('recycle')">
+                <span class="icon">♻️</span><span class="label">Recycle</span><span class="cost">50%</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="mobile-controls"><div id="joystick"></div></div>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const miniCanvas = document.getElementById('minimap-canvas');
+    const miniCtx = miniCanvas.getContext('2d');
+    
+    // Core Config
+    const COLS = 60, ROWS = 40, cellSize = 40;
+    const worldWidth = COLS * cellSize, worldHeight = ROWS * cellSize;
+    const PLAYER_SPEED = 4.2;
+
+    const BUILDINGS = {
+        wall: { cost: 12, hp: 500, icon: '🧱' },
+        research: { cost: 80, hp: 400, icon: '🔬' },
+        turret: { cost: 45, hp: 200, icon: '🔫', range: 250, fireRate: 35 },
+        repair: { cost: 8, icon: '🛠️' }
+    };
+
+    const ENEMY_TYPES = {
+        normal: { icon: '🧟', hp: 30, speed: 1.3, damage: 1.0, color: '#44ff44', wave: 1 },
+        runner: { icon: '🏃', hp: 15, speed: 2.8, damage: 0.5, color: '#ffff44', wave: 4 },
+        tank:   { icon: '🛡️', hp: 220, speed: 0.8, damage: 2.4, color: '#ffaa44', wave: 6 },
+        breaker:{ icon: '🧨', hp: 90, speed: 1.1, damage: 6.5, color: '#ff4444', wave: 8 }
+    };
+
+    // State
+    let currentState = 'MENU', scrap = 100, wave = 1, hp = 100, energy = 100;
+    let difficulty = 'medium', damageMult = 1.0, buildMode = 'wall', frameCount = 0;
+    let unlocked = { turret: true, repair: false }; // Turret starts unlocked
+    let buildings = [], enemies = [], projectiles = [], particles = [];
+    let keys = {}, camera = { x: 0, y: 0 }, player = { x: worldWidth/2, y: worldHeight/2 };
+    let currentLabInstance = null;
+
+    // A* Buffers
+    const collisionGrid = new Uint8Array(COLS * ROWS);
+    const gScore = new Uint16Array(COLS * ROWS);
+    const fScore = new Uint16Array(COLS * ROWS);
+    const parents = new Int32Array(COLS * ROWS);
+    const closedSet = new Uint8Array(COLS * ROWS);
+    let navDirty = true;
+
+    function init() {
+        resize();
+        window.addEventListener('keydown', e => { keys[e.code] = true; if(e.code === 'KeyP' || e.code === 'Escape') pauseGame(); });
+        window.addEventListener('keyup', e => keys[e.code] = false);
+        window.addEventListener('resize', resize);
+        canvas.addEventListener('mousedown', handleInput);
+        setupMobile();
+        gameLoop();
+    }
+
+    function resize() {
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        miniCanvas.width = 210; miniCanvas.height = 140;
+    }
+
+    function showDifficulty() { document.getElementById('main-menu').style.display = 'none'; document.getElementById('difficulty-screen').style.display = 'flex'; }
+    function hideDifficulty() { document.getElementById('difficulty-screen').style.display = 'none'; document.getElementById('main-menu').style.display = 'flex'; }
+    function showTutorial() { document.getElementById('tutorial-screen').style.display = 'flex'; }
+    function hideTutorial() { document.getElementById('tutorial-screen').style.display = 'none'; }
+    function pauseGame() { 
+        if(currentState === 'PLAYING') { currentState = 'PAUSED'; document.getElementById('pause-screen').style.display = 'flex'; }
+        else if(currentState === 'PAUSED') resumeGame();
+    }
+    function resumeGame() { currentState = 'PLAYING'; document.getElementById('pause-screen').style.display = 'none'; }
+    function resetGame() { location.reload(); }
+
+    function startGame(diff) {
+        difficulty = diff;
+        document.getElementById('difficulty-screen').style.display = 'none';
+        const cx = Math.floor(COLS/2), cy = Math.floor(ROWS/2);
+        
+        if (diff === 'easy') {
+            damageMult = 0.8;
+            buildings.push({ x: cx*40, y: cy*40, type: 'research', hp: 400, maxHp: 400, level: 1, timer: 0 });
+            for(let x=-1; x<=1; x++) for(let y=-1; y<=1; y++) if(x!==0||y!==0) buildings.push({x:(cx+x)*40,y:(cy+y)*40,type:'wall',hp:500,maxHp:500,level:1,timer:0});
+        } else if (diff === 'medium') {
+            damageMult = 1.0;
+            for(let x=-1; x<=1; x++) for(let y=-1; y<=1; y++) if(x!==0||y!==0) buildings.push({x:(cx+x)*40,y:(cy+y)*40,type:'wall',hp:500,maxHp:500,level:1,timer:0});
+        } else {
+            damageMult = 1.3;
+        }
+        
+        navDirty = true; checkVisibility();
+        currentState = 'PLAYING';
+    }
+
+    function setMode(m) {
+        buildMode = m;
+        document.querySelectorAll('.build-item').forEach(i => i.classList.remove('active'));
+        document.getElementById('item-'+m).classList.add('active');
+    }
+
+    function handleInput(e) {
+        if(currentState !== 'PLAYING') return;
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left + camera.x, my = e.clientY - rect.top + camera.y;
+        const gx = Math.floor(mx / cellSize), gy = Math.floor(my / cellSize);
+        if(gx < 0 || gx >= COLS || gy < 0 || gy >= ROWS) return;
+
+        const bIdx = buildings.findIndex(b => Math.floor(b.x/40) === gx && Math.floor(b.y/40) === gy);
+        
+        if (buildMode === 'recycle' && bIdx !== -1) {
+            scrap += Math.floor(BUILDINGS[buildings[bIdx].type].cost * 0.5 * buildings[bIdx].level);
+            buildings.splice(bIdx, 1); navDirty = true; checkVisibility();
+            return;
+        }
+
+        if (buildMode === 'repair' && bIdx !== -1 && scrap >= 8) {
+            buildings[bIdx].hp = Math.min(buildings[bIdx].hp + 150, buildings[bIdx].maxHp);
+            scrap -= 8; return;
+        }
+
+        if (buildMode === 'upgrade' && bIdx !== -1) {
+            const b = buildings[bIdx];
+            const upCost = Math.floor(BUILDINGS[b.type].cost * 1.5 * b.level);
+            if (scrap >= upCost) {
+                scrap -= upCost; b.level++;
+                const hpGain = Math.floor(BUILDINGS[b.type].hp * 0.4);
+                b.maxHp += hpGain; b.hp += hpGain;
+                createExplosion(b.x+20, b.y+20, '#00f2ff', 15);
+            }
+            return;
+        }
+
+        if (collisionGrid[gy*COLS+gx] === 0 && scrap >= BUILDINGS[buildMode].cost) {
+            scrap -= BUILDINGS[buildMode].cost;
+            buildings.push({ x: gx*40, y: gy*40, type: buildMode, hp: BUILDINGS[buildMode].hp, maxHp: BUILDINGS[buildMode].hp, level: 1, timer: 0 });
+            navDirty = true; checkVisibility();
+        }
+    }
+
+    // Research Management
+    function openResearch(lab) {
+        currentLabInstance = lab;
+        const console = document.getElementById('research-console');
+        const list = document.getElementById('research-list');
+        document.getElementById('lab-lvl-display').innerText = "LVL " + lab.level;
+        list.innerHTML = '';
+        
+        // Lab Upgrade Option
+        const labUpCost = Math.floor(80 * 2 * lab.level);
+        list.appendChild(createResearchOption(`UPGRADE LAB (LVL ${lab.level+1})`, labUpCost, () => {
+            if(scrap >= labUpCost) { scrap -= labUpCost; lab.level++; openResearch(lab); createExplosion(player.x, player.y, '#ffcc00', 20); }
+        }, lab.level >= 3));
+
+        // Recipe: Repair
+        if(!unlocked.repair) {
+            list.appendChild(createResearchOption("UNLOCK REPAIR TOOL", 50, () => {
+                if(scrap >= 50) { scrap -= 50; unlocked.repair = true; checkVisibility(); openResearch(lab); }
+            }));
+        }
+
+        // Tiered Research
+        if(lab.level >= 2) {
+            list.appendChild(createResearchOption("SYNTHESIZE RATIONS", 20, () => {
+                if(scrap >= 20) { scrap -= 20; energy = Math.min(100, energy + 40); openResearch(lab); }
+            }));
+        }
+        
+        console.style.display = 'flex';
+    }
+
+    function createResearchOption(title, cost, action, disabled = false) {
+        const div = document.createElement('div');
+        div.className = 'research-option';
+        div.innerHTML = `<div class="research-info"><div class="research-title">${title}</div><div class="research-cost">COST: ${cost} SCRAP</div></div>`;
+        const btn = document.createElement('button');
+        btn.className = 'research-btn-small';
+        btn.innerText = disabled ? 'MAXED' : 'RESEARCH';
+        btn.disabled = disabled || scrap < cost;
+        btn.onclick = action;
+        div.appendChild(btn);
+        return div;
+    }
+
+    function closeResearch() { document.getElementById('research-console').style.display = 'none'; currentLabInstance = null; }
+
+    function checkVisibility() {
+        document.getElementById('item-repair').style.display = unlocked.repair ? 'flex' : 'none';
+    }
+
+    // AI & Pathfinding
+    function updateNav() {
+        collisionGrid.fill(0);
+        buildings.forEach(b => collisionGrid[Math.floor(b.y/40)*COLS + Math.floor(b.x/40)] = 1);
+        navDirty = false;
+    }
+
+    function getPath(start, end) {
+        if(navDirty) updateNav();
+        gScore.fill(65535); fScore.fill(65535); closedSet.fill(0); parents.fill(-1);
+        let open = [start]; gScore[start] = 0;
+        const tx = end%COLS, ty = Math.floor(end/COLS);
+        fScore[start] = Math.abs((start%COLS)-tx) + Math.abs(Math.floor(start/COLS)-ty);
+
+        let its = 0;
+        while(open.length > 0 && its < 300) {
+            its++;
+            let lowF = 65535, cur = -1, oIdx = -1;
+            for(let i=0; i<open.length; i++) if(fScore[open[i]] < lowF) { lowF = fScore[open[i]]; cur = open[i]; oIdx = i; }
+            if(cur === end) {
+                let path = [], c = cur;
+                while(parents[c] !== -1) { path.push(c); c = parents[c]; }
+                return path.reverse();
+            }
+            open.splice(oIdx,1); closedSet[cur] = 1;
+            const cx = cur%COLS, cy = Math.floor(cur/COLS);
+            for(let [ox,oy] of [[0,-1],[0,1],[-1,0],[1,0]]) {
+                const nx = cx+ox, ny = cy+oy, n = ny*COLS+nx;
+                if(nx<0||nx>=COLS||ny<0||ny>=ROWS||closedSet[n]||collisionGrid[n]) continue;
+                const score = gScore[cur] + 1;
+                if(score < gScore[n]) {
+                    parents[n] = cur; gScore[n] = score;
+                    fScore[n] = score + Math.abs(nx-tx) + Math.abs(ny-ty);
+                    if(!open.includes(n)) open.push(n);
+                }
+            }
+        }
+        return null;
+    }
+
+    function update() {
+        if(currentState !== 'PLAYING') return;
+        frameCount++;
+
+        // Controls
+        let dx=0, dy=0;
+        if(keys['KeyW'] || keys['ArrowUp']) dy -= PLAYER_SPEED;
+        if(keys['KeyS'] || keys['ArrowDown']) dy += PLAYER_SPEED;
+        if(keys['KeyA'] || keys['ArrowLeft']) dx -= PLAYER_SPEED;
+        if(keys['KeyD'] || keys['ArrowRight']) dx += PLAYER_SPEED;
+        player.x = Math.max(0, Math.min(worldWidth-26, player.x + dx));
+        player.y = Math.max(0, Math.min(worldHeight-26, player.y + dy));
+
+        camera.x = Math.max(0, Math.min(worldWidth - canvas.width, player.x - canvas.width/2));
+        camera.y = Math.max(0, Math.min(worldHeight - canvas.height, player.y - canvas.height/2));
+
+        // Proximity Research Check
+        const playerGx = Math.floor((player.x+13)/40), playerGy = Math.floor((player.y+13)/40);
+        const labOnTile = buildings.find(b => b.type === 'research' && Math.floor(b.x/40) === playerGx && Math.floor(b.y/40) === playerGy);
+        
+        if(labOnTile) {
+            document.getElementById('interaction-prompt').style.display = 'block';
+            if(!currentLabInstance) openResearch(labOnTile);
+        } else {
+            document.getElementById('interaction-prompt').style.display = 'none';
+            if(currentLabInstance) closeResearch();
+        }
+
+        // Energy Mechanics
+        energy -= 0.012;
+        if(energy <= 0) { energy = 0; hp -= 0.05; }
+        const isBloodMoon = wave % 5 === 0;
+        if(isBloodMoon && frameCount % 60 === 0) document.getElementById('blood-moon-warning').style.display = 'block';
+        if(!isBloodMoon) document.getElementById('blood-moon-warning').style.display = 'none';
+
+        // Wave Logic
+        if(frameCount % Math.max(30, 160 - (wave*10)) === 0) spawnEnemy(isBloodMoon);
+        if(frameCount % 1800 === 0) wave++;
+
+        const pIdx = playerGy * COLS + playerGx;
+
+        enemies.forEach((e, i) => {
+            const eIdx = Math.floor(e.y/40)*COLS + Math.floor(e.x/40);
+            let target = pIdx;
+            if(e.type === 'breaker' && buildings.length > 0) target = Math.floor(buildings[0].y/40)*COLS + Math.floor(buildings[0].x/40);
+
+            if(!e.path || (frameCount+i)%60===0) e.path = getPath(eIdx, target);
+
+            if(e.path && e.path.length > 0) {
+                const n = e.path[0], tx = (n%COLS)*40+20, ty = Math.floor(n/COLS)*40+20;
+                const a = Math.atan2(ty-e.y, tx-e.x);
+                e.x += Math.cos(a)*e.speed; e.y += Math.sin(a)*e.speed;
+                if(Math.abs(e.x-tx)<8 && Math.abs(e.y-ty)<8) e.path.shift();
+            } else {
+                let dist = Math.sqrt((e.x-(player.x+13))**2 + (e.y-(player.y+13))**2);
+                let hitTarget = player;
+                for(let b of buildings) {
+                    let d = Math.sqrt((e.x-(b.x+20))**2 + (e.y-(b.y+20))**2);
+                    if(d < dist && d < 60) { dist = d; hitTarget = b; }
+                }
+                if(dist < 40) {
+                    const dmg = e.damage * damageMult * (isBloodMoon ? 2 : 1);
+                    if(hitTarget === player) hp -= dmg; else hitTarget.hp -= dmg;
+                } else {
+                    const a = Math.atan2((player.y+13)-e.y, (player.x+13)-e.x);
+                    e.x += Math.cos(a)*e.speed; e.y += Math.sin(a)*e.speed;
+                }
+            }
+            if(e.hp <= 0) { enemies.splice(i,1); scrap += 3; createExplosion(e.x, e.y, ENEMY_TYPES[e.type].color, 10); }
+        });
+
+        // Building Processing
+        buildings.forEach((b, bi) => {
+            if(b.hp <= 0) { buildings.splice(bi,1); navDirty = true; checkVisibility(); return; }
+            if(b.type === 'turret') {
+                b.timer++;
+                // Upgraded fire rate: level 1 = 35, level 2 = 28, level 3 = 21...
+                const rate = Math.max(15, 35 - (b.level-1)*7);
+                if(b.timer > rate) {
+                    const t = enemies.find(e => Math.abs(e.x-b.x-20)<(250 + b.level*30) && Math.abs(e.y-b.y-20)<(250 + b.level*30));
+                    if(t) {
+                        const a = Math.atan2(t.y-b.y-20, t.x-b.x-20);
+                        projectiles.push({x: b.x+20, y: b.y+20, vx: Math.cos(a)*10, vy: Math.sin(a)*10, dmg: 15 + b.level*5});
+                        b.timer = 0;
+                    }
+                }
+            }
+        });
+
+        projectiles.forEach((p, pi) => {
+            p.x += p.vx; p.y += p.vy;
+            if(p.x<0||p.x>worldWidth||p.y<0||p.y>worldHeight) projectiles.splice(pi,1);
+            for(let e of enemies) if(Math.abs(p.x-e.x)<20 && Math.abs(p.y-e.y)<20) { e.hp -= p.dmg; projectiles.splice(pi,1); break; }
+        });
+
+        particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.life -= 0.04; if(p.life<=0) particles.splice(i,1); });
+
+        // HUD Update
+        document.getElementById('hp-val').innerText = Math.max(0, Math.ceil(hp));
+        document.getElementById('energy-val').innerText = Math.max(0, Math.ceil(energy));
+        document.getElementById('scrap-val').innerText = scrap;
+        document.getElementById('wave-val').innerText = (isBloodMoon ? "BLOOD MOON " : "Wave ") + wave;
+        
+        if(hp <= 0) { 
+            currentState = 'GAMEOVER'; 
+            document.getElementById('game-over').style.display = 'flex'; 
+            document.getElementById('final-wave').innerText = wave;
+        }
+    }
+
+    function spawnEnemy(blood) {
+        const s = Math.floor(Math.random()*4);
+        let x, y;
+        if(s===0){ x=Math.random()*worldWidth; y=-40; }
+        else if(s===1){ x=worldWidth+40; y=Math.random()*worldHeight; }
+        else if(s===2){ x=Math.random()*worldWidth; y=worldHeight+40; }
+        else { x=-40; y=Math.random()*worldHeight; }
+
+        const pool = Object.keys(ENEMY_TYPES).filter(k => wave >= ENEMY_TYPES[k].wave);
+        const type = pool[Math.floor(Math.random()*pool.length)];
+        const cfg = ENEMY_TYPES[type];
+        enemies.push({ 
+            x, y, type, 
+            hp: cfg.hp * (1 + wave*0.25), 
+            speed: cfg.speed * (blood ? 1.5 : 1) * (1 + wave*0.04), 
+            damage: cfg.damage * (1 + wave*0.15),
+            path: null 
+        });
+    }
+
+    function draw() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        if(currentState === 'MENU' || currentState === 'TUTORIAL' || currentState === 'GAMEOVER') return;
+        
+        ctx.save();
+        ctx.translate(-Math.floor(camera.x), -Math.floor(camera.y));
+        
+        // World Grid
+        ctx.strokeStyle = wave%5===0 ? 'rgba(255,0,0,0.06)' : 'rgba(255,255,255,0.03)';
+        ctx.beginPath();
+        for(let i=0; i<=COLS; i++) { ctx.moveTo(i*40,0); ctx.lineTo(i*40,worldHeight); }
+        for(let i=0; i<=ROWS; i++) { ctx.moveTo(0,i*40); ctx.lineTo(worldWidth,i*40); }
+        ctx.stroke();
+
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        buildings.forEach(b => {
+            ctx.font = '28px serif'; ctx.fillText(BUILDINGS[b.type].icon, b.x+20, b.y+20);
+            ctx.fillStyle = '#444'; ctx.fillRect(b.x+5, b.y+35, 30, 3);
+            ctx.fillStyle = b.hp < b.maxHp * 0.3 ? '#ff0000' : '#00f2ff';
+            ctx.fillRect(b.x+5, b.y+35, 30*(b.hp/b.maxHp), 3);
+            if(b.level > 1) {
+                ctx.fillStyle = '#ffcc00'; ctx.font = '10px sans-serif'; ctx.fillText('Lv' + b.level, b.x+32, b.y+8);
+            }
+        });
+
+        ctx.font = '32px serif'; ctx.fillText('🤠', player.x+13, player.y+13);
+        enemies.forEach(e => { ctx.font = '28px serif'; ctx.fillText(ENEMY_TYPES[e.type].icon, e.x, e.y); });
+        ctx.fillStyle = '#00f2ff'; projectiles.forEach(p => { ctx.beginPath(); ctx.arc(p.x,p.y,3.5,0,7); ctx.fill(); });
+        particles.forEach(p => { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.fillRect(p.x,p.y,3,3); });
+        ctx.restore();
+
+        // Minimap Render
+        miniCtx.fillStyle = '#000'; miniCtx.fillRect(0,0,miniCanvas.width,miniCanvas.height);
+        buildings.forEach(b => { miniCtx.fillStyle = '#222'; miniCtx.fillRect((b.x/40)*3.3, (b.y/40)*3.3, 3, 3); });
+        miniCtx.fillStyle = '#00f2ff'; miniCtx.fillRect((player.x/40)*3.3, (player.y/40)*3.3, 3, 3);
+        enemies.forEach(e => { miniCtx.fillStyle = wave%5===0 ? '#ff0000' : ENEMY_TYPES[e.type].color; miniCtx.fillRect((e.x/40)*3.3, (e.y/40)*3.3, 2, 2); });
+        miniCtx.strokeStyle = '#333'; miniCtx.strokeRect((camera.x/40)*3.3, (camera.y/40)*3.3, (canvas.width/40)*3.3, (canvas.height/40)*3.3);
+    }
+
+    function createExplosion(x,y,c,n){ for(let i=0;i<n;i++) particles.push({x,y,vx:(Math.random()-0.5)*9,vy:(Math.random()-0.5)*9,life:1,color:c}); }
+
+    function setupMobile() {
+        const j = document.getElementById('mobile-controls'), js = document.getElementById('joystick');
+        let active = false;
+        j.addEventListener('touchstart', (e) => { e.preventDefault(); active = true; });
+        window.addEventListener('touchend', () => { active = false; js.style.transform = `translate(0,0)`; });
+        window.addEventListener('touchmove', (e) => {
+            if(!active) return;
+            const t = e.touches[0], r = j.getBoundingClientRect();
+            const cx = r.left + r.width/2, cy = r.top + r.height/2;
+            let dx = t.clientX-cx, dy = t.clientY-cy, d = Math.sqrt(dx*dx+dy*dy);
+            if(d>35) { dx*=35/d; dy*=35/d; }
+            js.style.transform = `translate(${dx}px, ${dy}px)`;
+            player.x += (dx/35)*PLAYER_SPEED; player.y += (dy/35)*PLAYER_SPEED;
+        }, {passive: false});
+    }
+
+    function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
+    window.onload = init;
+</script>
+</body>
+</html>
