@@ -3,12 +3,15 @@
 
         async function initializeDesktopOptions() {
             const desktopOnly = document.querySelectorAll('[data-desktop-only]');
+            const webOnly = document.querySelectorAll('[data-web-only]');
             if (!window.aloneDesktop) {
                 desktopOnly.forEach(element => { element.hidden = true; });
+                webOnly.forEach(element => { element.hidden = false; });
                 return;
             }
 
             desktopOnly.forEach(element => { element.hidden = false; });
+            webOnly.forEach(element => { element.hidden = true; });
             document.getElementById('desktop-fullscreen').addEventListener('change', async event => {
                 try {
                     await window.aloneDesktop.setFullscreen(event.target.checked);

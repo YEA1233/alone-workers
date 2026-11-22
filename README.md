@@ -14,6 +14,6 @@ Installed Windows NSIS, Debian DEB, and Fedora RPM builds check GitHub Releases 
 
 Game windows use the selected fullscreen and window-size settings; the launcher keeps an independent screen-aware size. Fullscreen uses the display's native resolution; the windowed presets are 1280×720, 1600×900, 1920×1080, and 2560×1440. Discord presence requires the Discord desktop app to be running.
 
-Desktop save slots are JSON files in Electron's per-user application data folder under `saves/`. Existing IndexedDB saves are copied there the first time the desktop version lists saved worlds. **OPEN .SAVE FILE** and **DOWNLOAD .SAVE** use native file dialogs in desktop releases; browser behavior remains unchanged. Save files exported from the game remain portable between desktop and web.
+Desktop save slots are JSON files in Electron's per-user application data folder under `saves/`. Existing browser IndexedDB saves are imported there once; desktop save reads and writes use local files. Sound settings are stored in `desktop-options.json` on desktop and in browser storage on the web. **OPEN .SAVE FILE** and **DOWNLOAD .SAVE** use native file dialogs in desktop releases; browser behavior remains unchanged. The web game's main menu links to the desktop download on itch.io.
 
 The Electron preload exposes only the narrow desktop APIs the renderer needs. Keep `contextIsolation` enabled and include `electron-preload.js` in the desktop build.

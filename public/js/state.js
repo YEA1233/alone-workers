@@ -466,7 +466,7 @@
             'main-menu', 'generation-screen', 'news-screen', 'achievements-screen',
             'init-choice', 'world-slots-screen', 'world-settings-screen',
             'room-browser-screen', 'tutorial-screen', 'pause-screen',
-            'desktop-options-screen'
+            'desktop-options-screen', 'sound-settings-screen'
         ];
         const MUSIC_COOLDOWN_EXEMPT = new Set(['boss', 'alphaWolf', 'winterCombat', 'mildCombat', 'caveWork', 'menu']);
         const GREG_SHAKE_MS = 1000;

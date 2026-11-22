@@ -30,5 +30,9 @@ contextBridge.exposeInMainWorld('aloneDesktop', Object.freeze({
     delete: id => ipcRenderer.invoke('desktop:saves:delete', id)
   }),
   openSave: () => ipcRenderer.invoke('desktop:open-save'),
-  exportSave: (save, filename) => ipcRenderer.invoke('desktop:export-save', save, filename)
+  exportSave: (save, filename) => ipcRenderer.invoke('desktop:export-save', save, filename),
+  sound: Object.freeze({
+    getSettings: () => ipcRenderer.invoke('desktop:sound:get-settings'),
+    setSettings: settings => ipcRenderer.invoke('desktop:sound:set-settings', settings)
+  })
 }));

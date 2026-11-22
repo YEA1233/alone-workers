@@ -37,7 +37,7 @@
         }
 
         function isAnyOverlayActive() {
-            const overlayIds = ['main-menu', 'init-choice', 'world-slots-screen', 'world-settings-screen', 'room-browser-screen', 'tutorial-screen', 'news-screen', 'desktop-options-screen', 'build-menu-overlay', 'world-map-overlay', 'pause-screen', 'admin-console'];
+            const overlayIds = ['main-menu', 'init-choice', 'world-slots-screen', 'world-settings-screen', 'room-browser-screen', 'tutorial-screen', 'news-screen', 'desktop-options-screen', 'sound-settings-screen', 'build-menu-overlay', 'world-map-overlay', 'pause-screen', 'admin-console'];
             const chestOpen = document.getElementById('chest-menu-overlay')?.style.display === 'flex';
             return chestOpen || overlayIds.some(id => {
                 const el = document.getElementById(id);
@@ -57,7 +57,7 @@
             });
         }
 
-        async function listBrowserSaveSlots() {
+        async function listLegacyBrowserSaveSlots() {
             const db = await openSaveDatabase();
             return new Promise((resolve, reject) => {
                 const store = db.transaction('saves', 'readonly').objectStore('saves');
@@ -77,22 +77,22 @@
         }
 
         async function listSaveSlots() {
-            if (!window.aloneDesktop) return listBrowserSaveSlots();
+            if (!window.aloneDesktop) return listLegacyBrowserSaveSlots();
             const desktopSlots = await window.aloneDesktop.saves.list();
             if (localStorage.getItem('alone_desktop_idb_migrated') === '1') return desktopSlots;
 
-            const legacySlots = await listBrowserSaveSlots();
+            const legacySlots = await listLegacyBrowserSaveSlots();
             const desktopIds = new Set(desktopSlots.map(slot => slot.slotId));
             for (const slot of legacySlots) {
                 if (desktopIds.has(slot.slotId)) continue;
-                const save = await loadFromBrowserIndexedDB(slot.slotId);
+                const save = await readLegacyBrowserSave(slot.slotId);
                 if (save) await window.aloneDesktop.saves.write(slot.slotId, save);
             }
             localStorage.setItem('alone_desktop_idb_migrated', '1');
             return legacySlots.length ? window.aloneDesktop.saves.list() : desktopSlots;
         }
 
-        async function loadFromBrowserIndexedDB(slotId = 'current') {
+        async function readLegacyBrowserSave(slotId = 'current') {
             const db = await openSaveDatabase();
             return new Promise((resolve, reject) => {
                 const request = db.transaction('saves', 'readonly').objectStore('saves').get(slotId);
@@ -101,7 +101,7 @@
             });
         }
 
-        async function saveToIndexedDB(save, slotId = 'legacy-current') {
+        async function writeSaveData(save, slotId = 'legacy-current') {
             if (window.aloneDesktop) return window.aloneDesktop.saves.write(slotId, save);
             const db = await openSaveDatabase();
             return new Promise((resolve, reject) => {
@@ -112,9 +112,9 @@
             });
         }
 
-        async function loadFromIndexedDB(slotId = 'current') {
+        async function readSaveData(slotId = 'current') {
             if (window.aloneDesktop) return window.aloneDesktop.saves.read(slotId);
-            return loadFromBrowserIndexedDB(slotId);
+            return readLegacyBrowserSave(slotId);
         }
 
         async function deleteSaveSlot(slotId) {
@@ -169,7 +169,9 @@
                 if (e.code === 'KeyM' && currentState !== 'MENU') { toggleWorldMap(); return; }
                 if (e.code.startsWith('Digit') && Number(e.code.slice(5)) >= 1 && Number(e.code.slice(5)) <= 9) { selectHotbar(Number(e.code.slice(5)) - 1); return; }
                 if (isAnyOverlayActive()) {
-                    if (e.code === 'KeyB' && document.getElementById('build-menu-overlay').style.display === 'flex') {
+                    if (e.code === 'Escape' && document.getElementById('sound-settings-screen').style.display === 'flex') {
+                        closeSoundSettings();
+                    } else if (e.code === 'KeyB' && document.getElementById('build-menu-overlay').style.display === 'flex') {
                         closeBuildMenu();
                     } else if ((e.code === 'KeyP' || e.code === 'Escape') && document.getElementById('pause-screen').style.display === 'flex') {
                         resumeGame();
@@ -383,7 +385,7 @@
             if (!activeSaveSlotName) activeSaveSlotName = prompt('Name this saved world:', onlineRoom ? `${onlineRoom} world` : 'My World')?.trim() || 'My World';
             save.slotId = activeSaveSlotId;
             save.slotName = activeSaveSlotName;
-            await saveToIndexedDB(save, activeSaveSlotId);
+            await writeSaveData(save, activeSaveSlotId);
             const exported = download ? await exportSaveFile(save, activeSaveSlotName) : true;
             checkSavedGame();
             return exported;
@@ -429,7 +431,7 @@
             saveData.slotId = activeSaveSlotId;
             saveData.slotName = activeSaveSlotName;
             try {
-                await saveToIndexedDB(saveData, activeSaveSlotId);
+                await writeSaveData(saveData, activeSaveSlotId);
                 localStorage.removeItem('alone_survival_save');
                 checkSavedGame();
             } catch (error) {
@@ -615,7 +617,7 @@
 
         async function loadGame(slotId = 'current') {
             try {
-                const save = await loadFromIndexedDB(slotId);
+                const save = await readSaveData(slotId);
                 const legacySave = window.aloneDesktop ? null : localStorage.getItem('alone_survival_save');
                 if (!save && !legacySave) throw new Error('No local save found.');
                 applySave(save || JSON.parse(legacySave));

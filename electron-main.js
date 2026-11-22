@@ -30,6 +30,8 @@ const DEFAULT_OPTIONS = {
   height: 720,
   fullscreen: false,
   discordEnabled: false,
+  musicVolume: 1,
+  effectsVolume: 1,
   theme: 'system',
   launchAtStartup: false,
   setupComplete: false
@@ -75,11 +77,17 @@ function validOptions(value) {
   const height = Number(value.height);
   const validBounds = Number.isInteger(width) && width >= 640 && width <= 7680 &&
     Number.isInteger(height) && height >= 480 && height <= 4320;
+  const validVolume = (volume, fallback) =>
+    typeof volume === 'number' && Number.isFinite(volume) && volume >= 0 && volume <= 1
+      ? volume
+      : fallback;
   return {
     width: validBounds ? width : DEFAULT_OPTIONS.width,
     height: validBounds ? height : DEFAULT_OPTIONS.height,
     fullscreen: value.fullscreen === true,
     discordEnabled: value.discordEnabled === true,
+    musicVolume: validVolume(value.musicVolume, DEFAULT_OPTIONS.musicVolume),
+    effectsVolume: validVolume(value.effectsVolume, DEFAULT_OPTIONS.effectsVolume),
     theme: THEMES.includes(value.theme) ? value.theme : DEFAULT_OPTIONS.theme,
     launchAtStartup: value.launchAtStartup === true,
     setupComplete: value.setupComplete === true
@@ -419,6 +427,23 @@ releaseUpdater.on('error', error => {
 });
 
 ipcMain.handle('desktop:get-state', () => getDesktopState());
+
+ipcMain.handle('desktop:sound:get-settings', () => ({
+  music: desktopOptions.musicVolume,
+  effects: desktopOptions.effectsVolume
+}));
+
+ipcMain.handle('desktop:sound:set-settings', async (_event, settings) => {
+  const validVolume = value => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1;
+  if (!settings || typeof settings !== 'object' || Array.isArray(settings) ||
+      !validVolume(settings.music) || !validVolume(settings.effects)) {
+    throw new Error('Sound settings must contain music and effects volumes from 0 to 1.');
+  }
+  desktopOptions.musicVolume = settings.music;
+  desktopOptions.effectsVolume = settings.effects;
+  await persistOptions();
+  return { music: desktopOptions.musicVolume, effects: desktopOptions.effectsVolume };
+});
 
 ipcMain.handle('desktop:complete-setup', async (_event, settings) => {
   if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {

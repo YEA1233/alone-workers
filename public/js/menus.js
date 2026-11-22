@@ -102,7 +102,7 @@
         function joinRoom(code, visibility = 'private') { onlineRoom = code; pendingVisibility = visibility; pendingMode = 'online'; document.getElementById('room-browser-screen').style.display = 'none'; document.getElementById('online-room-code').innerText = `ROOM CODE: ${onlineRoom}`; document.getElementById('online-room-code').style.display = 'block'; worldConfig = { ...worldConfig, creative: false }; worldSeed = Math.floor(Math.random() * 1000000); player.hp = 100; player.hunger = 100; startGameUI(); currentState = 'PLAYING'; connectToGameServer(); }
         async function hostSavedWorld(slotId, slot) {
             try {
-                const save = await loadFromIndexedDB(slotId);
+                const save = await readSaveData(slotId);
                 if (!save) throw new Error('Saved world not found.');
                 const seed = String(save.seedString || '').toUpperCase();
                 if (!seed) throw new Error('This save has no reusable world seed. Load it solo and save it again first.');

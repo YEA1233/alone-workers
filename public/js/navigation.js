@@ -104,8 +104,9 @@
             const definition = Object.values(TOKEN_DEFINITIONS).find(token => token.key === tokenKey);
             if (!definition) return;
             const audio = TOKEN_PICKUP_AUDIO.get(tokenKey);
-            if (audio) {
+            if (audio && soundSettings.effects > 0) {
                 audio.currentTime = 0;
+                audio.volume = soundSettings.effects;
                 audio.play().catch(error => console.warn(`Could not play token pickup sound "${definition.audio}":`, error));
             }
             showRewardBurst(`${definition.icon}`, `${definition.label} · WORLD TOKEN`, definition.color, definition.glow);

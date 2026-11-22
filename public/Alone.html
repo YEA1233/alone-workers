@@ -75,6 +75,8 @@
                 <button class="menu-btn" onclick="showTutorial()">TUTORIAL</button>
                 <button class="menu-btn" onclick="showAchievements()">ACHIEVEMENTS</button>
                 <button class="menu-btn" onclick="showNews()">NEWS & UPDATES</button>
+                <button class="menu-btn" onclick="openSoundSettings()">SOUND SETTINGS</button>
+                <a class="menu-btn menu-link" data-web-only href="https://yea1233.itch.io/alone" target="_blank" rel="noopener noreferrer">DOWNLOAD DESKTOP VERSION</a>
                 <button class="menu-btn" data-desktop-only hidden onclick="openDesktopOptions()">DESKTOP OPTIONS</button>
                 <button class="menu-btn" data-desktop-only hidden onclick="quitDesktopGame()">QUIT GAME</button>
             </div>
@@ -263,6 +265,27 @@
             </div>
             <button class="menu-btn primary" onclick="closeDesktopOptions()">BACK</button>
             <button class="menu-btn" data-desktop-only hidden onclick="quitDesktopGame()">QUIT GAME</button>
+        </div>
+        <div id="sound-settings-screen" class="screen" style="display:none;">
+            <h2>SOUND SETTINGS</h2>
+            <div class="settings-wrap sound-settings-wrap">
+                <label class="setting-item" for="music-volume">
+                    <span>MUSIC</span>
+                    <span class="sound-slider">
+                        <input id="music-volume" type="range" min="0" max="1" step="0.01" value="1" disabled oninput="updateSoundSettingsFromControls()" onchange="persistSoundSettings()">
+                        <output id="music-volume-value" for="music-volume">100%</output>
+                    </span>
+                </label>
+                <label class="setting-item" for="effects-volume">
+                    <span>SOUND EFFECTS</span>
+                    <span class="sound-slider">
+                        <input id="effects-volume" type="range" min="0" max="1" step="0.01" value="1" disabled oninput="updateSoundSettingsFromControls()" onchange="persistSoundSettings()">
+                        <output id="effects-volume-value" for="effects-volume">100%</output>
+                    </span>
+                </label>
+                <p id="sound-settings-status" role="status" aria-live="polite">Volume changes save automatically.</p>
+            </div>
+            <button class="menu-btn primary" type="button" onclick="closeSoundSettings()">BACK</button>
         </div>
 
         <div id="emoji-picker" class="emoji-picker" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="emoji-picker-title">
@@ -645,6 +668,7 @@
         <div id="pause-screen" class="screen" style="display:none;">
             <h2>PAUSED</h2>
             <button class="menu-btn primary" onclick="resumeGame()">RESUME</button>
+            <button class="menu-btn" onclick="openSoundSettings()">SOUND SETTINGS</button>
             <button class="menu-btn" data-desktop-only hidden onclick="openDesktopOptions()">DESKTOP OPTIONS</button>
             <button id="save-multiplayer-slot-btn" class="menu-btn" style="display:none;" onclick="saveMultiplayerWorld()">SAVE WORLD TO SLOT</button>
             <button class="menu-btn" style="border-color:var(--gold); color:var(--gold);" onclick="saveGame()">SAVE
