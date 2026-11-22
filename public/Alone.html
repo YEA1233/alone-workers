@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>ALONE TOGETHER</title>
-    <meta name="game-version" content="1.0.1.0">
+    <meta name="game-version" content="1.0.3.0">
     <meta name="description"
         content="Play ALONE TOGETHER, a free survival game in your browser. Gather resources, build shelter and survive. No download required.">
     <link rel="canonical" href="https://alone-game.crazyfunnyboy265.workers.dev/">
@@ -65,8 +65,8 @@
         <!-- SCREENS -->
         <div id="main-menu" class="screen">
             <h1>ALONE TOGETHER</h1>
-            <p id="game-version-label" class="game-version">VERSION 1.0.1.0</p>
-            <div style="display: flex; flex-direction: column; gap: 5px;">
+            <p id="game-version-label" class="game-version">VERSION 1.0.3.0</p>
+            <div class="main-menu-actions">
                 <button class="menu-btn primary" onclick="showInitialize()">PLAY</button>
                 <button id="load-save-btn" class="menu-btn"
                     style="display:none; border-color:var(--success); color:var(--success);" onclick="showWorldSlots('solo')">SAVED WORLDS</button>
@@ -76,13 +76,11 @@
                 <button class="menu-btn" onclick="showAchievements()">ACHIEVEMENTS</button>
                 <button class="menu-btn" onclick="showNews()">NEWS & UPDATES</button>
                 <button class="menu-btn" onclick="openSoundSettings()">SOUND SETTINGS</button>
-                <a class="menu-btn menu-link" data-web-only href="https://yea1233.itch.io/alone" target="_blank" rel="noopener noreferrer">DOWNLOAD DESKTOP VERSION</a>
+                <a class="menu-btn menu-link" data-web-only hidden href="https://github.com/YEA1233/alone-workers/releases" target="_blank" rel="noopener noreferrer">DOWNLOAD DESKTOP VERSION</a>
                 <button class="menu-btn" data-desktop-only hidden onclick="openDesktopOptions()">DESKTOP OPTIONS</button>
                 <button class="menu-btn" data-desktop-only hidden onclick="quitDesktopGame()">QUIT GAME</button>
             </div>
-            <div id="menu-quote"
-                style="margin-top: 30px; font-style: italic; color: #888; font-size: 0.9rem; max-width: 450px; line-height: 1.4;">
-            </div>
+            <div id="menu-quote"></div>
         </div>
         <div id="generation-screen" class="screen" style="display:none;">
             <div style="width:min(420px, 85vw); text-align:center; border:1px solid #444; padding:28px; background:#050505;">
