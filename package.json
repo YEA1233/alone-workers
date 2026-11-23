@@ -1,7 +1,7 @@
 {
   "name": "alone-workers",
-  "version": "1.0.5",
-  "gameVersion": "1.0.5.0",
+  "version": "1.0.6",
+  "gameVersion": "1.0.6.0",
   "description": "ALONE desktop release",
   "private": true,
   "main": "electron-main.js",
@@ -26,7 +26,7 @@
   "build": {
     "appId": "com.alone.game",
     "productName": "ALONE",
-    "buildVersion": "1.0.5.0",
+    "buildVersion": "1.0.6.0",
     "publish": [
       {
         "provider": "github",
