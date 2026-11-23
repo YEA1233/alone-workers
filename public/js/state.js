@@ -8,7 +8,7 @@
         const lctx = lightCanvas.getContext('2d');
 
         const TARGET_WIDTH = 1600;
-        const GAME_VERSION = document.querySelector('meta[name="game-version"]')?.content || '1.0.4.0';
+        const GAME_VERSION = document.querySelector('meta[name="game-version"]')?.content || '1.0.5.0';
         let globalScale = 1.0, logicalWidth = 1600, logicalHeight = 900;
         let COLS = 520, ROWS = 520, cellSize = 40;
         let worldWidth = COLS * cellSize, worldHeight = ROWS * cellSize;
