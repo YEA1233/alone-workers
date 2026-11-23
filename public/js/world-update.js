@@ -67,6 +67,7 @@
                 mapTerrainDirty = true;
             }
             if (currentState === 'MENU') return;
+            updatePlayerThoughts();
             if (document.hidden) {
                 stopMovement();
                 if (gameSocket && gameSocket.readyState === WebSocket.OPEN) {

@@ -496,6 +496,7 @@
         function startMobTask(m) {
             if (!isWeapon(getActiveItem())) { autoHint('Select an Axe, Pickaxe, or Sword to fight.'); return; }
             autoTask = { kind: 'mob', id: m.id != null ? m.id : null, ref: m, startType: m.type };
+            triggerPlayerThought('fight');
             autoPath = null;
             stopAutoSteer();
         }

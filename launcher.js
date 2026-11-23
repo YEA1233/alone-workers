@@ -1,8 +1,10 @@
-const releaseList = document.getElementById('latest-release');
-const aloneList = document.getElementById('alone-releases');
-const zombzList = document.getElementById('zombz-releases');
 const launcherStatus = document.getElementById('launcher-status');
 const discordStatus = document.getElementById('discord-status');
+const latestLaunchButton = document.getElementById('latest-launch-button');
+const aloneReleaseSelect = document.getElementById('alone-release-select');
+const zombzReleaseSelect = document.getElementById('zombz-release-select');
+const aloneLaunchButton = document.getElementById('alone-launch-button');
+const zombzLaunchButton = document.getElementById('zombz-launch-button');
 const fullscreenSetting = document.getElementById('fullscreen-setting');
 const windowSizeSetting = document.getElementById('window-size-setting');
 const themeSetting = document.getElementById('theme-setting');
@@ -20,6 +22,7 @@ const setupWindowSize = document.getElementById('setup-window-size');
 const setupError = document.getElementById('setup-error');
 let statusTimer;
 let removeUpdateListener;
+let releaseById = new Map();
 
 function showStatus(message, isError = false) {
   launcherStatus.textContent = message;
@@ -35,62 +38,56 @@ function versionOrder(left, right) {
   return left.title.localeCompare(right.title);
 }
 
-function createReleaseCard(release, latest = false) {
-  const card = document.createElement('article');
-  card.className = `release-card${latest ? ' latest' : ''}`;
-
-  const top = document.createElement('div');
-  top.className = 'card-top';
-  const title = document.createElement('h3');
-  title.className = 'release-title';
-  title.textContent = release.title;
-  const badge = document.createElement('span');
-  badge.className = 'badge';
-  badge.textContent = release.channel;
-  top.append(title, badge);
-
-  const version = document.createElement('p');
-  version.className = 'version';
-  version.textContent = `VERSION ${release.version}`;
-  const description = document.createElement('p');
-  description.className = 'description';
-  description.textContent = release.description;
-  const launch = document.createElement('button');
-  launch.className = 'launch';
-  launch.textContent = latest ? 'PLAY LATEST' : 'LAUNCH THIS VERSION';
-  launch.addEventListener('click', async () => {
-    launch.disabled = true;
-    launch.textContent = 'STARTING…';
-    showStatus(`Starting ${release.title} ${release.version}…`);
-    try {
-      await window.aloneDesktop.launchRelease(release.id);
-      showStatus(`${release.title} ${release.version} is running. Close the game window to return here.`);
-      window.aloneDesktop.setPresence(`Playing ${release.title} · ${release.version}`).catch(() => {});
-    } catch (error) {
-      showStatus(`Could not launch ${release.title} ${release.version}: ${error.message}`, true);
-    } finally {
-      launch.disabled = false;
-      launch.textContent = latest ? 'PLAY LATEST' : 'LAUNCH THIS VERSION';
-    }
-  });
-
-  card.append(top, version, description, launch);
-  return card;
+async function launchRelease(releaseId, button, defaultLabel) {
+  const release = releaseById.get(releaseId);
+  if (!release) {
+    showStatus('Choose a release first.', true);
+    return;
+  }
+  button.disabled = true;
+  button.textContent = 'STARTING…';
+  showStatus(`Starting ${release.title} ${release.version}…`);
+  try {
+    await window.aloneDesktop.launchRelease(release.id);
+    showStatus(`${release.title} ${release.version} is running. Close the game window to return here.`);
+    window.aloneDesktop.setPresence(`Playing ${release.title} · ${release.version}`).catch(() => {});
+  } catch (error) {
+    showStatus(`Could not launch ${release.title} ${release.version}: ${error.message}`, true);
+  } finally {
+    button.disabled = false;
+    button.textContent = defaultLabel;
+  }
 }
 
 function renderReleases(releases) {
   const latest = releases.find(release => release.id === 'current');
   if (!latest) throw new Error('The current release is missing from the launcher catalog.');
+  releaseById = new Map(releases.map(release => [release.id, release]));
   document.getElementById('latest-version-label').textContent = `CURRENT · ${latest.version}`;
   document.getElementById('launcher-version-label').textContent = latest.version;
-  releaseList.replaceChildren(createReleaseCard(latest, true));
+  document.getElementById('latest-title').textContent = latest.title;
+  document.getElementById('latest-description').textContent = latest.description;
 
   const archived = releases.filter(release => release.id !== 'current');
   const alone = archived.filter(release => release.title.startsWith('ALONE')).sort(versionOrder);
   const zombz = archived.filter(release => release.title.startsWith('ZOMBZ')).sort(versionOrder);
-  aloneList.replaceChildren(...alone.map(release => createReleaseCard(release)));
-  zombzList.replaceChildren(...zombz.map(release => createReleaseCard(release)));
+  const fillReleaseSelect = (select, items) => {
+    select.replaceChildren(new Option('Select a release…', ''));
+    for (const release of items) {
+      select.add(new Option(`${release.version} · ${release.title}`, release.id));
+    }
+  };
+  fillReleaseSelect(aloneReleaseSelect, alone);
+  fillReleaseSelect(zombzReleaseSelect, zombz);
+  aloneLaunchButton.disabled = true;
+  zombzLaunchButton.disabled = true;
 }
+
+latestLaunchButton.addEventListener('click', () => launchRelease('current', latestLaunchButton, 'PLAY LATEST'));
+aloneReleaseSelect.addEventListener('change', () => { aloneLaunchButton.disabled = !aloneReleaseSelect.value; });
+zombzReleaseSelect.addEventListener('change', () => { zombzLaunchButton.disabled = !zombzReleaseSelect.value; });
+aloneLaunchButton.addEventListener('click', () => launchRelease(aloneReleaseSelect.value, aloneLaunchButton, 'LAUNCH'));
+zombzLaunchButton.addEventListener('click', () => launchRelease(zombzReleaseSelect.value, zombzLaunchButton, 'LAUNCH'));
 
 function renderDesktopState(state) {
   updateWindowSizeOptions(windowSizeSetting, state.windowSizes, state.width, state.height);

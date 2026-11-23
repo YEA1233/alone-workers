@@ -810,7 +810,10 @@ function connectToGameServer() {
                     const world = message.world;
                     if (!world || !Array.isArray(world.terrain)) return;
                     if (typeof world.gregDefeated === 'boolean') gregDefeated = world.gregDefeated;
-                    if (message.layer === 'caves' && currentLayer !== 'caves') unlockAchievement('caves');
+                    if (message.layer === 'caves' && currentLayer !== 'caves') {
+                        unlockAchievement('caves');
+                        triggerPlayerThought('cave');
+                    }
                     currentLayer = message.layer === 'caves' ? 'caves' : 'surface';
                     gregArenaOnline = world.gregArena || null;
                     gregArenaLocked = !!world.gregArenaLocked;

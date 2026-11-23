@@ -550,6 +550,10 @@
                 drawFirstPersonCrosshair();
                 drawMinimap();
                 drawWinterScreenTint();
+                ctx.save();
+                ctx.scale(globalScale, globalScale);
+                drawPlayerThought(ctx, logicalWidth / 2, logicalHeight * 0.47 + 68);
+                ctx.restore();
                 return;
             }
             ctx.save(); ctx.scale(globalScale, globalScale);
@@ -673,6 +677,7 @@
                 ctx.save(); ctx.globalAlpha = 0.45; ctx.font = '32px serif'; ctx.fillText(BUILDINGS[buildMode].icon, placementMouse.x + 20, placementMouse.y + 20); ctx.restore();
             }
             ctx.font = '40px serif'; ctx.textAlign = 'center'; ctx.fillText(player.emoji, player.x + 20, player.y + 20);
+            drawPlayerThought(ctx, player.x + 20, player.y - 5);
             if (pendingMode === 'online') { ctx.font = 'bold 12px Segoe UI'; ctx.fillStyle = player.color; ctx.fillText(player.name, player.x + 20, player.y - 10); }
             drawAutoEffects();
             ctx.restore();

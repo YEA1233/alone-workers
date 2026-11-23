@@ -2,11 +2,11 @@ ALONE is a game where you gotta like survive. Don't go to this repo if you want 
 
 ## Client files
 
-The browser client is split into `public/Alone.html`, `public/css/game.css`, and ordered scripts in `public/js/`. The scripts are classic scripts, not ES modules: the existing game uses shared top-level state and inline HTML event handlers. Keep the script tags in `Alone.html` in their current order when adding or moving code.
+The browser client is split into `public/Alone.html`, `public/css/game.css`, and ordered scripts in `public/js/`. The scripts are classic scripts, not ES modules: the existing game uses shared top-level state and inline HTML event handlers. Keep the script tags in `Alone.html` in their current order when adding or moving code. `public/js/thoughts.js` drives context-aware, typewritten character thoughts and uses the bundled `public/thought.wav` sound.
 
 ## Desktop release
 
-The Electron app opens the release launcher. It includes the current ALONE release and automatically catalogs HTML builds in `legacy/`; versioned filenames such as `Alone (v0.19).html` are shown as `0.19.0.0`. An unversioned archive is listed as `0.0.0.0` and identified as unversioned. Close a game window to return to the launcher. New game releases use a four-part `major.minor.patch.revision` version such as `1.0.1.0`. The npm/Electron package keeps a SemVer-compatible version in `version`; `gameVersion` and Electron Builder's `buildVersion` carry the four-part game release number.
+The Electron app opens a compact, single-screen release launcher. It includes the current ALONE release and automatically catalogs HTML builds in `legacy/`; versioned filenames such as `Alone (v0.19).html` are shown as `0.19.0.0`. An unversioned archive is listed as `0.0.0.0` and identified as unversioned. Close a game window to return to the launcher. New game releases use a four-part `major.minor.patch.revision` version such as `1.0.1.0`. The npm/Electron package keeps a SemVer-compatible version in `version`; `gameVersion` and Electron Builder's `buildVersion` carry the four-part game release number.
 
 Run `npm run desktop:build` to create the configured desktop packages for the host platform without publishing them. The Windows NSIS installer offers install-location and shortcut options; the first-run wizard picks a screen-safe window size, theme, fullscreen, and sign-in behavior.
 

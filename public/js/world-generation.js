@@ -409,6 +409,7 @@
             }
             player.x = exit.x + cellSize - 13;
             player.y = exit.y + cellSize - 13;
+            triggerPlayerThought('cave');
             player.inBoat = false;
             autoTask = null;
             autoPath = null;

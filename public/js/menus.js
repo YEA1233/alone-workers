@@ -565,6 +565,7 @@
             }
         }
         function startGameUI() {
+            clearPlayerThoughts();
             document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
             const isOnline = pendingMode === 'online' || pendingMode === 'online-create';
             updateDesktopPresence(`${isOnline ? 'Playing multiplayer' : 'Surviving solo'} · Day ${dayCount}`);
