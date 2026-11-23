@@ -1667,15 +1667,17 @@ export class MyDurableObject {
             return this.worldError(player, "Greg has sealed the arena. Defeat him or wait until no one remains inside.");
         }
         const exit = this.withLayer('caves', () => this.buildings.find(building =>
-            building.id === payload.buildingId && building.type === 'cave_exit' &&
-            (!building.entranceId || building.entranceId === player.caveEntranceId)
+            building.id === payload.buildingId && building.type === 'cave_exit'
         ));
         if (!exit) return this.worldError(player, 'Cave exit not found.');
         if (Math.hypot(player.x + 13 - (exit.x + 20), player.y + 13 - (exit.y + 20)) > HARVEST_REACH) {
             return this.worldError(player, 'You are too far from the cave exit.');
         }
         const entrance = this.withLayer('surface', () => this.buildings.find(building =>
-            building.id === player.caveEntranceId && building.type === 'cave_entrance'
+            building.type === 'cave_entrance' &&
+            (building.id === exit.entranceId ||
+                (!exit.entranceId && building.caveExitId === exit.id) ||
+                (!exit.entranceId && building.id === player.caveEntranceId))
         ));
         if (!entrance) return this.worldError(player, 'The surface entrance is no longer available.');
         player.layer = 'surface';
