@@ -1,58 +1,58 @@
         const CHARACTER_THOUGHTS = {
             ambient: [
-                'I should probably have a plan.',
-                'That tree looks like it knows something.',
-                'I wonder if anyone else is having a normal day.',
-                'One more step. Then another. Great plan.',
-                'I miss having pockets that make sense.',
-                'This place is a lot bigger when you are lost.',
-                'I should stop talking to myself. Anyway...',
+                'i should probably have a plan.',
+                'that tree looks like it knows something.',
+                'i wonder if anyone else is having a normal day.',
+                'one more step. then another. great plan.',
+                'i miss having pockets that make sense.',
+                'this place is a lot bigger when you are lost.',
+                'i should stop talking to myself. anyway...',
                 'Maybe I can build something that stays standing.',
-                'I hope that noise was just the wind.',
-                'I am sure this is fine. Probably.',
-                'I wonder what the weather is doing. Besides this.',
-                'A snack would solve at least one of my problems.'
+                'i hope that noise was just the wind.',
+                'i am sure this is fine. probably.',
+                'i wonder what the weather is doing. besides this.',
+                'a snack would solve at least one of my problems.'
             ],
             cold: [
                 "it's so cold...",
-                'My bones are filing a complaint.',
-                'I would trade a lot for a warm rock right now.',
-                'Keep moving. Freezing is a bad look.',
-                'I miss the sun. And my fingers.',
-                'A campfire would be a very good friend right now.'
+                'my bones are filing a complaint.',
+                'i would trade a lot for a warm rock right now.',
+                'keep moving. freezing is a bad look.',
+                'i miss the sun. and my fingers.',
+                'a campfire would be a very good friend right now.'
             ],
             cave: [
                 'why am i going in THERE',
-                'That rock looks like a face. hi, rock.',
-                'If I hear a noise, I did not hear a noise.',
-                'This cave has terrible natural lighting.',
-                'I should have brought more courage. And torches.',
-                'The rocks are quiet. That is somehow worse.',
-                'Hello, cave. Please do not become a problem.',
-                'Every step deeper feels like a questionable choice.'
+                'that rock looks like a face. hi, rock.',
+                'if i hear a noise, i did not hear a noise.',
+                'this cave has terrible natural lighting.',
+                'i should have brought more courage. and torches.',
+                'the rocks are quiet. that is somehow worse.',
+                'hello, cave. please do not become a problem.',
+                'every step deeper feels like a questionable choice.'
             ],
             lowHealth: [
                 'i was going to be someone',
                 'tell them i tried.',
-                'I have made several avoidable choices.',
-                'Okay. New plan: do not get hit again.',
-                'I am not ready to be a cautionary tale.'
+                'i have made several avoidable choices.',
+                'okay. new plan: do not get hit again.',
+                'i am not ready to be a cautionary tale.'
             ],
             hurt: [
                 'it hurts so bad',
                 "god i shouldn't have done that",
-                'Ow. That was a very bad idea.',
-                'I felt that in every possible way.',
-                'Note to self: avoid the sharp end.',
-                'I would like to file a complaint.'
+                'ow. that was a very bad idea.',
+                'i felt that in every possible way.',
+                'note to self: avoid the sharp end.',
+                'i would like to file a complaint.'
             ],
             fight: [
                 'aim for the knees!',
                 "you'll rue the day! what does rue mean?",
-                'Okay, act confident. Now swing.',
-                'I have a plan. The plan is mostly swinging.',
-                'This seemed easier in my head.',
-                'Come on then. I think.'
+                'okay, act confident. now swing.',
+                'i have a plan. the plan is mostly swinging.',
+                'this seemed easier in my head.',
+                'come on then. i think.'
             ]
         };
         const THOUGHT_PRIORITY = { ambient: 0, cold: 1, cave: 1, lowHealth: 2, fight: 3, hurt: 3 };
